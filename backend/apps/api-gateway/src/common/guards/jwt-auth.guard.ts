@@ -1,0 +1,16 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+/**
+ * Guard xác thực JWT Access Token.
+ * Sử dụng: @UseGuards(JwtAuthGuard)
+ */
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  handleRequest(err: any, user: any) {
+    if (err || !user) {
+      throw err || new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
+    }
+    return user;
+  }
+}

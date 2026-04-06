@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package product;
+
+// ── Product Service ──
+service ProductService {
+  rpc GetBatchById (GetBatchByIdRequest) returns (BatchResponse);
+  rpc GetFarmById (GetFarmByIdRequest) returns (FarmResponse);
+}
+
+message GetBatchByIdRequest {
+  string batch_id = 1;
+}
+
+message BatchResponse {
+  string id = 1;
+  string batch_code = 2;
+  string farm_id = 3;
+  string crop_category_id = 4;
+  string status = 5;
+  string created_by = 6;
+  string name = 7;
+  string planting_date = 8;
+}
+
+message GetFarmByIdRequest {
+  string farm_id = 1;
+}
+
+message FarmResponse {
+  string id = 1;
+  string name = 2;
+  string address = 3;
+  string owner_id = 4;
+  string certification_status = 5;
+}

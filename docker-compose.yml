@@ -1,10 +1,61 @@
-version: '3'
+version: '3.8'
+
 services:
-  db:
-    image: postgres
+  user-db:
+    image: postgres:16-alpine
+    container_name: agritrace-user-db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: user_admin
+      POSTGRES_PASSWORD: user_pass123
+      POSTGRES_DB: agritrace_users
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_admin -d agritrace_users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  product-db:
+    image: postgres:16-alpine
+    container_name: agritrace-product-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: product_admin
+      POSTGRES_PASSWORD: product_pass123
+      POSTGRES_DB: agritrace_products
+    ports:
+      - "5434:5432"
+    volumes:
+      - product_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U product_admin -d agritrace_products"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  trace-db:
+    image: postgres:16-alpine
+    container_name: agritrace-trace-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: trace_admin
+      POSTGRES_PASSWORD: trace_pass123
+      POSTGRES_DB: agritrace_traces
+    ports:
+      - "5435:5432"
+    volumes:
+      - trace_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trace_admin -d agritrace_traces"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  user_db_data:
+  product_db_data:
+  trace_db_data:

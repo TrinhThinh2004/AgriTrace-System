@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package user;
+
+// ── User Service ──────────────────────────────────────────────────
+service UserService {
+  // Auth RPCs
+  rpc Register      (RegisterRequest)       returns (AuthResponse);
+  rpc Login         (LoginRequest)          returns (AuthResponse);
+  rpc RefreshTokens (RefreshTokensRequest)  returns (TokenPairResponse);
+  rpc Logout        (LogoutRequest)         returns (MessageResponse);
+
+  // User RPCs
+  rpc GetProfile    (GetProfileRequest)     returns (UserResponse);
+  rpc GetUserById   (GetUserByIdRequest)    returns (UserResponse);
+
+  // Internal service-to-service RPCs
+  rpc ValidateToken (ValidateTokenRequest)  returns (ValidateTokenResponse);
+}
+
+// ── Auth Messages ─────────────────────────────────────────────────
+message RegisterRequest {
+  string email     = 1;
+  string password  = 2;
+  string full_name = 3;
+  string phone     = 4;
+}
+
+message LoginRequest {
+  string email    = 1;
+  string password = 2;
+}
+
+message RefreshTokensRequest {
+  string user_id       = 1;
+  string refresh_token = 2;
+}
+
+message LogoutRequest {
+  string user_id = 1;
+}
+
+message AuthResponse {
+  string access_token  = 1;
+  string refresh_token = 2;
+  UserResponse user    = 3;
+}
+
+message TokenPairResponse {
+  string access_token  = 1;
+  string refresh_token = 2;
+}
+
+message MessageResponse {
+  string message = 1;
+}
+
+// ── User Messages ─────────────────────────────────────────────────
+message GetProfileRequest {
+  string user_id = 1;
+}
+
+message GetUserByIdRequest {
+  string user_id = 1;
+}
+
+message UserResponse {
+  string id         = 1;
+  string email      = 2;
+  string full_name  = 3;
+  string role       = 4;
+  string status     = 5;
+  string phone      = 6;
+  string created_at = 7;
+}
+
+// ── ValidateToken (dùng cho internal service-to-service) ──────────
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+message ValidateTokenResponse {
+  bool   valid   = 1;
+  string user_id = 2;
+  string email   = 3;
+  string role    = 4;
+}

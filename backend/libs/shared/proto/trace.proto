@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package trace;
+
+// ── Trace Service ──────────────────────────────────────────────────
+service TraceService {
+  rpc GetActivityLogsByBatch (GetByBatchRequest)  returns (ActivityLogListResponse);
+  rpc GetInspectionsByBatch  (GetByBatchRequest)  returns (InspectionListResponse);
+}
+
+// ── Common ─────────────────────────────────────────────────────────
+message GetByBatchRequest {
+  string batch_id = 1;
+}
+
+// ── Activity Log ────────────────────────────────────────────────────
+message ActivityLogResponse {
+  string id            = 1;
+  string batch_id      = 2;
+  string activity_type = 3;
+  string performed_by  = 4;
+  string performed_at  = 5;
+  string location      = 6;
+  string notes         = 7;
+  bool   is_signed     = 8;
+  string signed_at     = 9;
+}
+
+message ActivityLogListResponse {
+  repeated ActivityLogResponse logs = 1;
+}
+
+// ── Inspection ──────────────────────────────────────────────────────
+message InspectionResponse {
+  string id              = 1;
+  string batch_id        = 2;
+  string inspector_id    = 3;
+  string inspection_type = 4;
+  string result          = 5;
+  string conducted_at    = 6;
+  string notes           = 7;
+  bool   is_signed       = 8;
+  string signed_at       = 9;
+}
+
+message InspectionListResponse {
+  repeated InspectionResponse inspections = 1;
+}

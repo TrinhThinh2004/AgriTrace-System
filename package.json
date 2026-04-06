@@ -1,0 +1,12 @@
+{
+  "name": "agritrace-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start:gateway": "cd backend && npm run start:api-gateway",
+    "start:user": "cd backend && npm run start:user-service",
+    "start:product": "cd backend && npm run start:product-service",
+    "start:trace": "cd backend && npm run start:trace-service",
+    "install:all": "cd backend && npm install"
+  }
+}
