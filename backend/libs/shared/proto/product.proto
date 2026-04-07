@@ -6,6 +6,24 @@ package product;
 service ProductService {
   rpc GetBatchById (GetBatchByIdRequest) returns (BatchResponse);
   rpc GetFarmById (GetFarmByIdRequest) returns (FarmResponse);
+
+  // ABAC ownership checks
+  rpc CheckFarmOwnership  (CheckFarmOwnershipRequest)  returns (OwnershipResponse);
+  rpc CheckBatchOwnership (CheckBatchOwnershipRequest) returns (OwnershipResponse);
+}
+
+message CheckFarmOwnershipRequest {
+  string user_id = 1;
+  string farm_id = 2;
+}
+
+message CheckBatchOwnershipRequest {
+  string user_id  = 1;
+  string batch_id = 2;
+}
+
+message OwnershipResponse {
+  bool allowed = 1;
 }
 
 message GetBatchByIdRequest {

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ProductModule } from './product/product.module';
 import { HealthController } from './health.controller';
+import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
 
 @Module({
   imports: [
@@ -28,5 +30,9 @@ import { HealthController } from './health.controller';
     ProductModule,
   ],
   controllers: [HealthController],
+  providers: [
+    // Đọc x-user-id / x-user-role từ gRPC metadata, gắn vào payload (__auth)
+    { provide: APP_INTERCEPTOR, useClass: GrpcAuthInterceptor },
+  ],
 })
 export class AppModule {}

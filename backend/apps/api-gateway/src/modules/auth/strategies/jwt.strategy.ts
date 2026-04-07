@@ -9,10 +9,7 @@ export interface JwtPayload {
   role: string;
 }
 
-/**
- * Strategy xác thực Access Token.
- * Passport tự động gắn payload vào request.user.
- */
+// Strategy này sẽ dùng để xác thực JWT Access Token trong các route cần bảo vệ
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(configService: ConfigService) {

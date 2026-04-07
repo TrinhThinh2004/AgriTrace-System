@@ -14,7 +14,6 @@ export class Farm {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  /** user_id từ user-service — cross-service reference (không có FK constraint) */
   @Column({ type: 'uuid' })
   owner_id: string;
 

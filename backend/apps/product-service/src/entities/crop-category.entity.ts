@@ -33,7 +33,7 @@ export class CropCategory {
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 
-  // ── Relations ──
+  // Relations
   @OneToMany(() => Batch, (batch) => batch.crop_category)
   batches: Batch[];
 }

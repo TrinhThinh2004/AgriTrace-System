@@ -5,7 +5,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
-// ── gRPC service interface (phải khớp với user.proto) ──────────────
+// Định nghĩa interface cho gRPC client của User Service(phải đồng bộ với user.proto)
 interface UserServiceGrpc {
   register(data: {
     email: string;
@@ -42,7 +42,7 @@ export class AuthService implements OnModuleInit {
     this.userService = this.client.getService<UserServiceGrpc>('UserService');
   }
 
-  // ─── Proxy methods → gRPC → user-service ──────────────────────
+  // Proxy các method gọi đến User Service qua gRPC
 
   async register(dto: RegisterDto) {
     return firstValueFrom(

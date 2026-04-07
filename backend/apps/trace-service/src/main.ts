@@ -18,6 +18,7 @@ async function bootstrap() {
       url: grpcUrl,
       package: 'trace',
       protoPath: join(process.cwd(), 'libs/shared/proto/trace.proto'),
+      loader: { keepCase: true },
     },
   });
 

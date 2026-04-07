@@ -2,15 +2,12 @@ import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 
-/**
- * gRPC Controller cho UserService (user.proto).
- * Mỗi @GrpcMethod map với 1 rpc trong proto.
- */
+
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // ─── rpc Register ───
+  // rpc Register
   @GrpcMethod('UserService', 'Register')
   async register(data: { email: string; password: string; full_name: string; phone?: string }) {
     const result = await this.authService.register(data);
@@ -29,7 +26,7 @@ export class AuthController {
     };
   }
 
-  // ─── rpc Login ───
+  // rpc Login
   @GrpcMethod('UserService', 'Login')
   async login(data: { email: string; password: string }) {
     const result = await this.authService.login(data);
@@ -48,7 +45,7 @@ export class AuthController {
     };
   }
 
-  // ─── rpc RefreshTokens ───
+  // rpc RefreshTokens
   @GrpcMethod('UserService', 'RefreshTokens')
   async refreshTokens(data: { user_id: string; refresh_token: string }) {
     return this.authService.refreshTokens({
@@ -57,13 +54,13 @@ export class AuthController {
     });
   }
 
-  // ─── rpc Logout ───
+  // rpc Logout
   @GrpcMethod('UserService', 'Logout')
   async logout(data: { user_id: string }) {
     return this.authService.logout(data.user_id);
   }
 
-  // ─── rpc GetProfile ───
+  // rpc GetProfile
   @GrpcMethod('UserService', 'GetProfile')
   async getProfile(data: { user_id: string }) {
     const user = await this.authService.getProfile(data.user_id);
@@ -78,7 +75,7 @@ export class AuthController {
     };
   }
 
-  // ─── rpc GetUserById ───
+  // rpc GetUserById
   @GrpcMethod('UserService', 'GetUserById')
   async getUserById(data: { user_id: string }) {
     const user = await this.authService.getUserById(data.user_id);
@@ -93,7 +90,7 @@ export class AuthController {
     };
   }
 
-  // ─── rpc ValidateToken ───
+  // rpc ValidateToken
   @GrpcMethod('UserService', 'ValidateToken')
   async validateToken(data: { token: string }) {
     return this.authService.validateToken(data.token);

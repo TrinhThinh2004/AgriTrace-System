@@ -18,6 +18,7 @@ async function bootstrap() {
       url: grpcUrl,
       package: 'product',
       protoPath: join(process.cwd(), 'libs/shared/proto/product.proto'),
+      loader: { keepCase: true },
     },
   });
 

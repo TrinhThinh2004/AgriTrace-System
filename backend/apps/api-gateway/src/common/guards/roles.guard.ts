@@ -6,17 +6,22 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '../enums';
-import { ROLES_KEY } from '../decorators';
+import { IS_PUBLIC_KEY, ROLES_KEY } from '../decorators';
 
-/**
- * Guard kiểm tra role (RBAC).
- * Sử dụng kết hợp: @UseGuards(JwtAuthGuard, RolesGuard) + @Roles(Role.ADMIN)
- */
+// Guard này sẽ kiểm tra xem user có role phù hợp để truy cập endpoint hay không.
+// ADMIN luôn được bypass (super user).
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
+    // Public endpoint 
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     // Lấy danh sách roles được phép từ @Roles() decorator
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
@@ -33,6 +38,9 @@ export class RolesGuard implements CanActivate {
     if (!user || !user.role) {
       throw new ForbiddenException('Bạn chưa được phân quyền để truy cập tài nguyên này');
     }
+
+    // ADMIN luôn được phép
+    if (user.role === Role.ADMIN) return true;
 
     const hasRole = requiredRoles.includes(user.role);
 

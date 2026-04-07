@@ -14,7 +14,7 @@ import { User } from '../entities/user.entity';
 import { UserProfile } from '../entities/user-profile.entity';
 import { Role, UserStatus } from '@app/shared';
 
-// ── gRPC request/response types (matched với user.proto) ──
+// Dto cho các request gRPC 
 export interface RegisterRequest {
   email: string;
   password: string;
@@ -45,9 +45,7 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  // ─────────────────────────────────────────────
-  // REGISTER
-  // ─────────────────────────────────────────────
+  // Register method 
   async register(dto: RegisterRequest) {
     const existing = await this.userRepo.findOne({ where: { email: dto.email } });
     if (existing) {
@@ -78,9 +76,7 @@ export class AuthService {
     };
   }
 
-  // ─────────────────────────────────────────────
-  // LOGIN
-  // ─────────────────────────────────────────────
+  // Login method
   async login(dto: LoginRequest) {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
 
@@ -106,9 +102,7 @@ export class AuthService {
     };
   }
 
-  // ─────────────────────────────────────────────
-  // REFRESH TOKENS (Token Rotation)
-  // ─────────────────────────────────────────────
+  // Refresh tokens method
   async refreshTokens(dto: RefreshTokensRequest) {
     const user = await this.userRepo.findOne({ where: { id: dto.user_id } });
 
@@ -129,17 +123,13 @@ export class AuthService {
     return tokens;
   }
 
-  // ─────────────────────────────────────────────
-  // LOGOUT
-  // ─────────────────────────────────────────────
+  // Logout method
   async logout(userId: string) {
     await this.userRepo.update(userId, { refresh_token_hash: undefined });
     return { message: 'Đăng xuất thành công' };
   }
 
-  // ─────────────────────────────────────────────
-  // GET PROFILE
-  // ─────────────────────────────────────────────
+  // Get profile method
   async getProfile(userId: string) {
     const user = await this.userRepo.findOne({
       where: { id: userId },
@@ -153,9 +143,7 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
-  // ─────────────────────────────────────────────
-  // GET USER BY ID (for internal service calls)
-  // ─────────────────────────────────────────────
+  // Get user by ID 
   async getUserById(userId: string) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
@@ -164,9 +152,7 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
-  // ─────────────────────────────────────────────
-  // VALIDATE TOKEN (for service-to-service auth)
-  // ─────────────────────────────────────────────
+//  Validate token method (dành cho API Gateway khi nhận JWT từ client)
   async validateToken(token: string) {
     try {
       const payload = await this.jwtService.verifyAsync(token, {
@@ -183,10 +169,7 @@ export class AuthService {
     }
   }
 
-  // ═════════════════════════════════════════════
-  // PRIVATE HELPERS
-  // ═════════════════════════════════════════════
-
+  // Helper methods
   private async generateTokens(user: User) {
     const payload = { sub: user.id, email: user.email, role: user.role };
 
@@ -213,7 +196,6 @@ export class AuthService {
   }
 
   private sanitizeUser(user: User) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password_hash, refresh_token_hash, ...safeUser } = user;
     return safeUser;
   }

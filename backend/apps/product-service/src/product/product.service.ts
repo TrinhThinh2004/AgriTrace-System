@@ -25,4 +25,24 @@ export class ProductService {
     if (!farm) throw new NotFoundException(`Farm ${farmId} không tìm thấy`);
     return farm;
   }
+
+  // ABAC kiểm tra ownership 
+
+  async checkFarmOwnership(userId: string, farmId: string): Promise<boolean> {
+    const count = await this.farmRepo.count({
+      where: { id: farmId, owner_id: userId },
+    });
+    return count > 0;
+  }
+
+  async checkBatchOwnership(userId: string, batchId: string): Promise<boolean> {
+    // Batch thuộc về user nếu farm chứa batch đó có owner_id = user
+    const row = await this.batchRepo
+      .createQueryBuilder('b')
+      .innerJoin('b.farm', 'f')
+      .where('b.id = :batchId', { batchId })
+      .andWhere('f.owner_id = :userId', { userId })
+      .getCount();
+    return row > 0;
+  }
 }

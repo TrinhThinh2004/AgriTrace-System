@@ -11,27 +11,29 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto';
-import { JwtAuthGuard } from '../../common/guards';
-import { CurrentUser } from '../../common/decorators';
+import { CurrentUser, Public } from '../../common/decorators';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // ─── POST /auth/register ───
+  // post /auth/register
+  @Public()
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
-  // ─── POST /auth/login ───
+  // post /auth/login
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
-  // ─── POST /auth/refresh ───
+  // post /auth/refresh 
+  @Public()
   @Post('refresh')
   @UseGuards(AuthGuard('jwt-refresh'))
   @HttpCode(HttpStatus.OK)
@@ -39,17 +41,15 @@ export class AuthController {
     return this.authService.refreshTokens(user.id, user.refreshToken);
   }
 
-  // ─── POST /auth/logout ───
+  // post /auth/logout
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser('id') userId: string) {
     return this.authService.logout(userId);
   }
 
-  // ─── GET /auth/profile ───
+  // get /auth/profile
   @Get('profile')
-  @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser('id') userId: string) {
     return this.authService.getProfile(userId);
   }

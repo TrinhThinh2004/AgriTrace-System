@@ -2,15 +2,12 @@ import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { ProductService } from './product.service';
 
-/**
- * gRPC Controller cho ProductService (product.proto).
- * Mỗi @GrpcMethod map với 1 rpc trong proto.
- */
+
 @Controller()
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
-  // ─── rpc GetBatchById ───
+  // rpc GetBatchById
   @GrpcMethod('ProductService', 'GetBatchById')
   async getBatchById(data: { batch_id: string }) {
     const batch = await this.productService.getBatchById(data.batch_id);
@@ -26,7 +23,7 @@ export class ProductController {
     };
   }
 
-  // ─── rpc GetFarmById ───
+  // rpc GetFarmById
   @GrpcMethod('ProductService', 'GetFarmById')
   async getFarmById(data: { farm_id: string }) {
     const farm = await this.productService.getFarmById(data.farm_id);
@@ -37,5 +34,25 @@ export class ProductController {
       owner_id:             farm.owner_id,
       certification_status: farm.certification_status,
     };
+  }
+
+  // rpc CheckFarmOwnership — ABAC
+  @GrpcMethod('ProductService', 'CheckFarmOwnership')
+  async checkFarmOwnership(data: { user_id: string; farm_id: string }) {
+    const allowed = await this.productService.checkFarmOwnership(
+      data.user_id,
+      data.farm_id,
+    );
+    return { allowed };
+  }
+
+  // rpc CheckBatchOwnership — ABAC
+  @GrpcMethod('ProductService', 'CheckBatchOwnership')
+  async checkBatchOwnership(data: { user_id: string; batch_id: string }) {
+    const allowed = await this.productService.checkBatchOwnership(
+      data.user_id,
+      data.batch_id,
+    );
+    return { allowed };
   }
 }

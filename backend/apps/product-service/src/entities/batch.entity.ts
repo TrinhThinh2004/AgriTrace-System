@@ -43,7 +43,6 @@ export class Batch {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  /** user_id từ user-service — cross-service reference */
   @Column({ type: 'uuid' })
   created_by: string;
 
@@ -53,7 +52,7 @@ export class Batch {
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 
-  // ── Relations ──
+  // Realations
   @ManyToOne(() => Farm, (farm) => farm.batches, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'farm_id' })
   farm: Farm;

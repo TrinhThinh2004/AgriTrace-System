@@ -14,10 +14,10 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
 
-    // JWT module để validate token cục bộ trong Gateway
+    // JWT Module đăng ký tạm thời
     JwtModule.register({}),
 
-    // ── gRPC Client → user-service ──
+    // GRPC Client để kết nối với User Service
     ClientsModule.registerAsync([
       {
         name: 'USER_SERVICE',
@@ -29,6 +29,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
             url: config.get<string>('USER_SERVICE_GRPC_URL') || 'localhost:50051',
             package: 'user',
             protoPath: join(process.cwd(), 'libs/shared/proto/user.proto'),
+            loader: { keepCase: true },
           },
         }),
       },

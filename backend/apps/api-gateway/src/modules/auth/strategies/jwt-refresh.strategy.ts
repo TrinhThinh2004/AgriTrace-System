@@ -4,10 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, StrategyOptionsWithRequest } from 'passport-jwt';
 import { Request } from 'express';
 
-/**
- * Strategy xác thực Refresh Token.
- * Extract token từ Authorization header + attach raw token vào request.
- */
+// Strategy này sẽ dùng để xác thực JWT Refresh Token trong route /auth/refresh
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(configService: ConfigService) {
