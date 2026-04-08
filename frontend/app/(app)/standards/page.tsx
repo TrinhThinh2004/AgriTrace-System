@@ -1,0 +1,59 @@
+"use client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil } from "lucide-react";
+import { mockStandards } from "@/lib/mockData";
+import { useToast } from "@/hooks/use-toast";
+
+export default function Standards() {
+  const { toast } = useToast();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Standards Management</h1>
+          <p className="text-sm text-muted-foreground">Manage agricultural certification standards</p>
+        </div>
+        <Button onClick={() => toast({ title: "Add Standard", description: "Standard form would open" })}>
+          <Plus className="h-4 w-4 mr-1" /> Add Standard
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mockStandards.map(s => (
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.name}</TableCell>
+                  <TableCell className="font-mono text-sm">{s.code}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{s.description}</TableCell>
+                  <TableCell>
+                    <Badge variant={s.status === "active" ? "default" : "secondary"} className="text-xs capitalize">
+                      {s.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-3 w-3" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
