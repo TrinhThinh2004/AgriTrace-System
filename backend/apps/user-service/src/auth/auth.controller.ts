@@ -10,39 +10,49 @@ export class AuthController {
   // rpc Register
   @GrpcMethod('UserService', 'Register')
   async register(data: { email: string; password: string; full_name: string; phone?: string }) {
-    const result = await this.authService.register(data);
-    return {
-      access_token:  result.access_token,
-      refresh_token: result.refresh_token,
-      user: {
-        id:         result.user.id,
-        email:      result.user.email,
-        full_name:  result.user.full_name,
-        role:       result.user.role,
-        status:     result.user.status,
-        phone:      result.user.phone ?? '',
-        created_at: result.user.created_at?.toISOString() ?? '',
-      },
-    };
+    try {
+      const result = await this.authService.register(data);
+      return {
+        access_token:  result.access_token,
+        refresh_token: result.refresh_token,
+        user: {
+          id:         result.user.id,
+          email:      result.user.email,
+          full_name:  result.user.full_name,
+          role:       result.user.role,
+          status:     result.user.status,
+          phone:      result.user.phone ?? '',
+          created_at: result.user.created_at?.toISOString() ?? '',
+        },
+      };
+    } catch (error) {
+      console.error('[User Service] Error in Register:', error);
+      throw error;
+    }
   }
 
   // rpc Login
   @GrpcMethod('UserService', 'Login')
   async login(data: { email: string; password: string }) {
-    const result = await this.authService.login(data);
-    return {
-      access_token:  result.access_token,
-      refresh_token: result.refresh_token,
-      user: {
-        id:         result.user.id,
-        email:      result.user.email,
-        full_name:  result.user.full_name,
-        role:       result.user.role,
-        status:     result.user.status,
-        phone:      result.user.phone ?? '',
-        created_at: result.user.created_at?.toISOString() ?? '',
-      },
-    };
+    try {
+      const result = await this.authService.login(data);
+      return {
+        access_token:  result.access_token,
+        refresh_token: result.refresh_token,
+        user: {
+          id:         result.user.id,
+          email:      result.user.email,
+          full_name:  result.user.full_name,
+          role:       result.user.role,
+          status:     result.user.status,
+          phone:      result.user.phone ?? '',
+          created_at: result.user.created_at?.toISOString() ?? '',
+        },
+      };
+    } catch (error) {
+      console.error('[User Service] Error in Login:', error);
+      throw error;
+    }
   }
 
   // rpc RefreshTokens

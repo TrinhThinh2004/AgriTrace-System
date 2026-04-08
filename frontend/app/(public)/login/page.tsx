@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tractor, Leaf, Shield, QrCode, CheckCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const benefits = [
   {
@@ -36,7 +36,7 @@ const benefits = [
 export default function Login() {
   const { login, register } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
+
 
   // Login state
   const [email, setEmail] = useState("");
@@ -45,34 +45,44 @@ export default function Login() {
   // Register state
   const [rName, setRName] = useState("");
   const [rEmail, setREmail] = useState("");
+  const [rPhone, setRPhone] = useState("");
   const [rPassword, setRPassword] = useState("");
   const [rConfirm, setRConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
+    setSubmitting(true);
+    const ok = await login(email, password);
+    setSubmitting(false);
+    if (ok) {
       router.push("/dashboard");
     } else {
-      toast({
-        title: "Đăng nhập thất bại",
-        description: "Email hoặc mật khẩu không đúng.",
-        variant: "destructive",
+      toast.error("Đăng nhập thất bại", {
+        description: "Email hoặc mật khẩu không đúng."
       });
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rPassword !== rConfirm) {
-      toast({ title: "Mật khẩu không khớp", variant: "destructive" });
+      toast.error("Mật khẩu không khớp");
       return;
     }
-    const res = register({ name: rName, email: rEmail, password: rPassword, role: "farmer" });
+    setSubmitting(true);
+    const res = await register({
+      name: rName,
+      email: rEmail,
+      password: rPassword,
+      phone: rPhone || undefined,
+    });
+    setSubmitting(false);
     if (res.ok) {
-      toast({ title: "Đăng ký thành công", description: "Chào mừng bạn đến với AgriTrace!" });
-      router.push("/dashboard");  
+      toast.success("Đăng ký thành công", { description: "Chào mừng bạn đến với AgriTrace!" });
+      router.push("/dashboard");
     } else {
-      toast({ title: "Đăng ký thất bại", description: res.message, variant: "destructive" });
+      toast.error("Đăng ký thất bại", { description: res.message });
     }
   };
 
@@ -138,7 +148,9 @@ export default function Login() {
                     <Input id="password" type="password" placeholder="••••••••"
                       value={password} onChange={e => setPassword(e.target.value)} required />
                   </div>
-                  <Button type="submit" className="w-full" size="lg">Đăng nhập</Button>
+                  <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+                    {submitting ? "Đang xử lý..." : "Đăng nhập"}
+                  </Button>
                 </form>
               </TabsContent>
 
@@ -152,23 +164,30 @@ export default function Login() {
                     <Label htmlFor="rEmail">Email</Label>
                     <Input id="rEmail" type="email" value={rEmail} onChange={e => setREmail(e.target.value)} required />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="rPhone">Số điện thoại <span className="text-muted-foreground">(tuỳ chọn)</span></Label>
+                    <Input id="rPhone" type="tel" value={rPhone} onChange={e => setRPhone(e.target.value)} placeholder="0901234567" />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="rPassword">Mật khẩu</Label>
                       <Input id="rPassword" type="password" value={rPassword}
-                        onChange={e => setRPassword(e.target.value)} required minLength={6} />
+                        onChange={e => setRPassword(e.target.value)} required minLength={8} />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="rConfirm">Xác nhận</Label>
                       <Input id="rConfirm" type="password" value={rConfirm}
-                        onChange={e => setRConfirm(e.target.value)} required minLength={6} />
+                        onChange={e => setRConfirm(e.target.value)} required minLength={8} />
                     </div>
                   </div>
-                  {/* <p className="text-xs text-muted-foreground">
-                    Tài khoản mới được tạo với vai trò <span className="font-medium text-foreground">Nông dân (Farmer)</span>.
-                    Tài khoản Kiểm định viên do quản trị viên cấp riêng.
-                  </p> */}
-                  <Button type="submit" className="w-full" size="lg">Tạo tài khoản</Button>
+                  <p className="text-xs text-muted-foreground">
+                    Mật khẩu tối thiểu 8 ký tự, gồm chữ hoa và số. Tài khoản mới có vai trò{" "}
+                    <span className="font-medium text-foreground">Nông dân</span> —
+                    tài khoản Kiểm định viên do quản trị viên cấp riêng.
+                  </p>
+                  <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+                    {submitting ? "Đang xử lý..." : "Tạo tài khoản"}
+                  </Button>
                 </form>
               </TabsContent>
             </Tabs>

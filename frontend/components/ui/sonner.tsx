@@ -1,3 +1,4 @@
+"use client";
 // @ts-nocheck
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
@@ -9,6 +10,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   return (
     <Sonner
+      position="top-right"
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       toastOptions={{

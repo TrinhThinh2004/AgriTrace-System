@@ -3,18 +3,21 @@ import { SidebarProvider } from "./SidebarContext";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { isLoggedIn } = useAuth();
+  const hydrated = useAuthStore((s) => s.hydrated);
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn, router]);
+    // Chỉ redirect khi AuthBootstrap đã thử refresh xong — tránh đá nhầm user đang có cookie hợp lệ
+    if (hydrated && !isLoggedIn) router.replace("/login");
+  }, [hydrated, isLoggedIn, router]);
 
-  if (!isLoggedIn) return null;
+  if (!hydrated || !isLoggedIn) return null;
 
   return (
     <SidebarProvider>
