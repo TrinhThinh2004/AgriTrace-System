@@ -40,6 +40,15 @@ export class Batch {
   @Column({ type: 'date', nullable: true })
   actual_harvest_date: Date;
 
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  harvested_quantity: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  shipped_quantity: number;
+
+  @Column({ type: 'varchar', length: 20, default: 'kg' })
+  unit: string;
+
   @Column({ type: 'text', nullable: true })
   notes: string;
 

@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ProductModule } from './product/product.module';
+import { CropCategoryModule } from './crop-category/crop-category.module';
+import { FarmModule } from './farm/farm.module';
+import { BatchModule } from './batch/batch.module';
 import { HealthController } from './health.controller';
 import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
 
@@ -27,7 +29,9 @@ import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
       }),
     }),
 
-    ProductModule,
+    CropCategoryModule,
+    FarmModule,
+    BatchModule,
   ],
   controllers: [HealthController],
   providers: [

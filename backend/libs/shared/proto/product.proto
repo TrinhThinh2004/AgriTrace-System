@@ -4,14 +4,43 @@ package product;
 
 // ── Product Service ──
 service ProductService {
-  rpc GetBatchById (GetBatchByIdRequest) returns (BatchResponse);
-  rpc GetFarmById (GetFarmByIdRequest) returns (FarmResponse);
+  // ABAC ownership checks (used by api-gateway OwnershipGuard)
+  rpc GetBatchById         (GetBatchByIdRequest)         returns (BatchResponse);
+  rpc GetFarmById          (GetFarmByIdRequest)          returns (FarmResponse);
+  rpc CheckFarmOwnership   (CheckFarmOwnershipRequest)   returns (OwnershipResponse);
+  rpc CheckBatchOwnership  (CheckBatchOwnershipRequest)  returns (OwnershipResponse);
 
-  // ABAC ownership checks
-  rpc CheckFarmOwnership  (CheckFarmOwnershipRequest)  returns (OwnershipResponse);
-  rpc CheckBatchOwnership (CheckBatchOwnershipRequest) returns (OwnershipResponse);
+  // ── Crop Category CRUD ──
+  rpc CreateCropCategory   (CreateCropCategoryRequest)   returns (CropCategoryResponse);
+  rpc UpdateCropCategory   (UpdateCropCategoryRequest)   returns (CropCategoryResponse);
+  rpc DeleteCropCategory   (DeleteCropCategoryRequest)   returns (EmptyResponse);
+  rpc GetCropCategoryById  (GetCropCategoryByIdRequest)  returns (CropCategoryResponse);
+  rpc ListCropCategories   (ListCropCategoriesRequest)   returns (ListCropCategoriesResponse);
+
+  // ── Farm CRUD ──
+  rpc CreateFarm           (CreateFarmRequest)           returns (FarmResponse);
+  rpc UpdateFarm           (UpdateFarmRequest)           returns (FarmResponse);
+  rpc DeleteFarm           (DeleteFarmRequest)           returns (EmptyResponse);
+  rpc ListFarms            (ListFarmsRequest)            returns (ListFarmsResponse);
+
+  // ── Batch CRUD ──
+  rpc CreateBatch          (CreateBatchRequest)          returns (BatchResponse);
+  rpc UpdateBatch          (UpdateBatchRequest)          returns (BatchResponse);
+  rpc DeleteBatch          (DeleteBatchRequest)          returns (EmptyResponse);
+  rpc ListBatches          (ListBatchesRequest)          returns (ListBatchesResponse);
+  rpc TransitionBatchStatus(TransitionBatchStatusRequest) returns (BatchResponse);
 }
 
+// ───────── Common ─────────
+message EmptyResponse {}
+
+message Pagination {
+  int32 page  = 1;
+  int32 limit = 2;
+  int32 total = 3;
+}
+
+// ───────── ABAC ─────────
 message CheckFarmOwnershipRequest {
   string user_id = 1;
   string farm_id = 2;
@@ -26,29 +55,171 @@ message OwnershipResponse {
   bool allowed = 1;
 }
 
-message GetBatchByIdRequest {
-  string batch_id = 1;
+// ───────── Crop Category ─────────
+message CropCategoryResponse {
+  string id          = 1;
+  string name        = 2;
+  string description = 3;
+  string status      = 4;
+  string created_at  = 5;
+  string updated_at  = 6;
 }
 
-message BatchResponse {
+message CreateCropCategoryRequest {
+  string name        = 1;
+  string description = 2;
+}
+
+message UpdateCropCategoryRequest {
+  string id          = 1;
+  string name        = 2;
+  string description = 3;
+  string status      = 4;
+}
+
+message DeleteCropCategoryRequest {
   string id = 1;
-  string batch_code = 2;
-  string farm_id = 3;
-  string crop_category_id = 4;
-  string status = 5;
-  string created_by = 6;
-  string name = 7;
-  string planting_date = 8;
+}
+
+message GetCropCategoryByIdRequest {
+  string id = 1;
+}
+
+message ListCropCategoriesRequest {
+  string status = 1;
+  int32  page   = 2;
+  int32  limit  = 3;
+}
+
+message ListCropCategoriesResponse {
+  repeated CropCategoryResponse items = 1;
+  Pagination pagination               = 2;
+}
+
+// ───────── Farm ─────────
+message FarmResponse {
+  string id                   = 1;
+  string owner_id             = 2;
+  string name                 = 3;
+  string address              = 4;
+  string location_lat         = 5;
+  string location_long        = 6;
+  string area_hectares        = 7;
+  string certification_status = 8;
+  string status               = 9;
+  string created_at           = 10;
+  string updated_at           = 11;
 }
 
 message GetFarmByIdRequest {
   string farm_id = 1;
 }
 
-message FarmResponse {
+message CreateFarmRequest {
+  // optional — Admin có thể truyền owner_id; Farmer sẽ bị ép bằng caller id (lấy từ gRPC metadata)
+  string owner_id             = 1;
+  string name                 = 2;
+  string address              = 3;
+  string location_lat         = 4;
+  string location_long        = 5;
+  string area_hectares        = 6;
+  string certification_status = 7;
+}
+
+message UpdateFarmRequest {
+  string id                   = 1;
+  string name                 = 2;
+  string address              = 3;
+  string location_lat         = 4;
+  string location_long        = 5;
+  string area_hectares        = 6;
+  string certification_status = 7;
+  string status               = 8;
+}
+
+message DeleteFarmRequest {
   string id = 1;
-  string name = 2;
-  string address = 3;
-  string owner_id = 4;
-  string certification_status = 5;
+}
+
+message ListFarmsRequest {
+  string owner_id = 1;
+  string status   = 2;
+  int32  page     = 3;
+  int32  limit    = 4;
+}
+
+message ListFarmsResponse {
+  repeated FarmResponse items = 1;
+  Pagination pagination       = 2;
+}
+
+// ───────── Batch ─────────
+message BatchResponse {
+  string id                    = 1;
+  string batch_code            = 2;
+  string farm_id               = 3;
+  string crop_category_id      = 4;
+  string name                  = 5;
+  string status                = 6;
+  string planting_date         = 7;
+  string expected_harvest_date = 8;
+  string actual_harvest_date   = 9;
+  string harvested_quantity    = 10;
+  string shipped_quantity      = 11;
+  string unit                  = 12;
+  string notes                 = 13;
+  string created_by            = 14;
+  string created_at            = 15;
+  string updated_at            = 16;
+}
+
+message GetBatchByIdRequest {
+  string batch_id = 1;
+}
+
+message CreateBatchRequest {
+  string batch_code            = 1;
+  string farm_id               = 2;
+  string crop_category_id      = 3;
+  string name                  = 4;
+  string planting_date         = 5;
+  string expected_harvest_date = 6;
+  string unit                  = 7;
+  string notes                 = 8;
+}
+
+message UpdateBatchRequest {
+  string id                    = 1;
+  string name                  = 2;
+  string planting_date         = 3;
+  string expected_harvest_date = 4;
+  string actual_harvest_date   = 5;
+  string harvested_quantity    = 6;
+  string shipped_quantity      = 7;
+  string unit                  = 8;
+  string notes                 = 9;
+}
+
+message DeleteBatchRequest {
+  string id = 1;
+}
+
+message ListBatchesRequest {
+  string farm_id = 1;
+  string status  = 2;
+  int32  page    = 3;
+  int32  limit   = 4;
+}
+
+message ListBatchesResponse {
+  repeated BatchResponse items = 1;
+  Pagination pagination        = 2;
+}
+
+message TransitionBatchStatusRequest {
+  string id                  = 1;
+  string next_status         = 2;
+  string actual_harvest_date = 3;
+  string harvested_quantity  = 4;
+  string shipped_quantity    = 5;
 }
