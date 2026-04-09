@@ -21,7 +21,7 @@ export function BatchCard({ batch }: { batch: Batch }) {
             </div>
             <p className="text-sm text-foreground">{batch.cropVariety}</p>
             <p className="text-xs text-muted-foreground mt-1">{batch.farmName} · {batch.area}</p>
-            <p className="text-xs text-muted-foreground">Planted: {batch.plantingDate}</p>
+            <p className="text-xs text-muted-foreground">Ngày trồng: {batch.plantingDate}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={() => navigate(`/batch/${batch.id}`)}>
             <ArrowRight className="h-4 w-4" />
@@ -33,7 +33,7 @@ export function BatchCard({ batch }: { batch: Batch }) {
               <div key={s} className={`h-1 flex-1 rounded-full ${s <= batch.currentStep ? "bg-primary" : "bg-muted"}`} />
             ))}
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1">Step {batch.currentStep} of 4</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Bước {batch.currentStep} / 4</p>
         </div>
       </CardContent>
     </Card>

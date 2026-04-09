@@ -14,21 +14,21 @@ import type { Role } from "@/lib/mockData";
 
 const menuItems: Record<Role, { title: string; url: string; icon: React.ElementType }[]> = {
   admin: [
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "Farms", url: "/farms", icon: Building2 },
-    { title: "Crop Varieties", url: "/crops", icon: Sprout },
-    { title: "Users", url: "/users", icon: Users },
-    { title: "Standards", url: "/standards", icon: Shield },
+    { title: "Trang chủ", url: "/dashboard", icon: LayoutDashboard },
+    { title: "Trang trại", url: "/farms", icon: Building2 },
+    { title: "Giống cây trồng", url: "/crops", icon: Sprout },
+    { title: "Người dùng", url: "/users", icon: Users },
+    { title: "Tiêu chuẩn", url: "/standards", icon: Shield },
   ],
   farmer: [
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "My Batches", url: "/dashboard", icon: Leaf },
+    { title: "Trang chủ", url: "/dashboard", icon: LayoutDashboard },
+    { title: "Lô hàng của tôi", url: "/dashboard", icon: Leaf },
   ],
   inspector: [
-    { title: "Reviews", url: "/dashboard", icon: ClipboardCheck },
+    { title: "Kiểm định", url: "/dashboard", icon: ClipboardCheck },
   ],
   public: [
-    { title: "Trace Product", url: "/trace/AGT-2024-001", icon: QrCode },
+    { title: "Tra cứu sản phẩm", url: "/trace/AGT-2024-001", icon: QrCode },
   ],
 };
 
@@ -62,7 +62,7 @@ export function AppSidebar() {
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
         {!collapsed && (
           <p className="px-3 pb-1 text-xs uppercase tracking-wider text-sidebar-muted">
-            Navigation
+            Điều hướng
           </p>
         )}
         {items.map(item => (

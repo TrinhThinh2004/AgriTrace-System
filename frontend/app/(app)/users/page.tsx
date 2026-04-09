@@ -29,17 +29,17 @@ export default function UserManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">User Management</h1>
-          <p className="text-sm text-muted-foreground">Manage users and role assignments</p>
+          <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
+          <p className="text-sm text-muted-foreground">Quản lý người dùng và phân quyền</p>
         </div>
-        <Button onClick={() => toast({ title: "Add User", description: "User form would open" })}>
-          <Plus className="h-4 w-4 mr-1" /> Add User
+        <Button onClick={() => toast({ title: "Thêm người dùng", description: "Mở biểu mẫu thêm người dùng" })}>
+          <Plus className="h-4 w-4 mr-1" /> Thêm người dùng
         </Button>
       </div>
 
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search users..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder="Tìm kiếm người dùng..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <Card>
@@ -47,9 +47,9 @@ export default function UserManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
+                <TableHead>Người dùng</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Vai trò</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>

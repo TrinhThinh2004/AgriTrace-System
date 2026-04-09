@@ -20,17 +20,17 @@ export default function CropVarieties() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Crop Varieties</h1>
-          <p className="text-sm text-muted-foreground">Manage crop variety catalog</p>
+          <h1 className="text-2xl font-bold">Giống cây trồng</h1>
+          <p className="text-sm text-muted-foreground">Quản lý danh mục giống cây trồng</p>
         </div>
-        <Button onClick={() => toast({ title: "Add Variety", description: "Variety form would open" })}>
-          <Plus className="h-4 w-4 mr-1" /> Add Variety
+        <Button onClick={() => toast({ title: "Thêm giống cây", description: "Mở biểu mẫu thêm giống cây" })}>
+          <Plus className="h-4 w-4 mr-1" /> Thêm giống cây
         </Button>
       </div>
 
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search varieties..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder="Tìm kiếm giống cây..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <Card>
@@ -38,10 +38,10 @@ export default function CropVarieties() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Season</TableHead>
-                <TableHead>Avg Yield</TableHead>
+                <TableHead>Tên</TableHead>
+                <TableHead>Phân loại</TableHead>
+                <TableHead>Mùa vụ</TableHead>
+                <TableHead>Năng suất TB</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>

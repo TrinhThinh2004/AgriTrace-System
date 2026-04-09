@@ -124,10 +124,10 @@ export function PublicFooter() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            © 2026 AgriTrace. All rights reserved.
+            © 2026 AgriTrace. Bảo lưu mọi quyền.
           </p>
           <p className="text-xs text-muted-foreground">
-            Made with <span className="text-primary">🌱</span> in Vietnam
+            Được tạo với <span className="text-primary">🌱</span> tại Việt Nam
           </p>
         </div>
       </div>

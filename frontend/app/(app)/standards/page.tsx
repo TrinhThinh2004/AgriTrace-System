@@ -14,11 +14,11 @@ export default function Standards() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Standards Management</h1>
-          <p className="text-sm text-muted-foreground">Manage agricultural certification standards</p>
+          <h1 className="text-2xl font-bold">Quản lý tiêu chuẩn</h1>
+          <p className="text-sm text-muted-foreground">Quản lý tiêu chuẩn chứng nhận nông nghiệp</p>
         </div>
-        <Button onClick={() => toast({ title: "Add Standard", description: "Standard form would open" })}>
-          <Plus className="h-4 w-4 mr-1" /> Add Standard
+        <Button onClick={() => toast({ title: "Thêm tiêu chuẩn", description: "Mở biểu mẫu thêm tiêu chuẩn" })}>
+          <Plus className="h-4 w-4 mr-1" /> Thêm tiêu chuẩn
         </Button>
       </div>
 
@@ -27,10 +27,10 @@ export default function Standards() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Tên</TableHead>
+                <TableHead>Mã</TableHead>
+                <TableHead>Mô tả</TableHead>
+                <TableHead>Trạng thái</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>

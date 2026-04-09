@@ -21,17 +21,17 @@ export default function FarmsManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Farms Management</h1>
-          <p className="text-sm text-muted-foreground">Manage registered farms</p>
+          <h1 className="text-2xl font-bold">Quản lý trang trại</h1>
+          <p className="text-sm text-muted-foreground">Quản lý các trang trại đã đăng ký</p>
         </div>
-        <Button onClick={() => toast({ title: "Add Farm", description: "Farm creation form would open" })}>
-          <Plus className="h-4 w-4 mr-1" /> Add Farm
+        <Button onClick={() => toast({ title: "Thêm trang trại", description: "Mở biểu mẫu tạo trang trại" })}>
+          <Plus className="h-4 w-4 mr-1" /> Thêm trang trại
         </Button>
       </div>
 
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search farms..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder="Tìm kiếm trang trại..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <Card>
@@ -39,12 +39,12 @@ export default function FarmsManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Area</TableHead>
-                <TableHead>Standard</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Tên</TableHead>
+                <TableHead>Chủ sở hữu</TableHead>
+                <TableHead>Vị trí</TableHead>
+                <TableHead>Diện tích</TableHead>
+                <TableHead>Tiêu chuẩn</TableHead>
+                <TableHead>Trạng thái</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -60,7 +60,7 @@ export default function FarmsManagement() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={f.certified ? "default" : "secondary"} className="text-xs">
-                      {f.certified ? "Certified" : "Pending"}
+                      {f.certified ? "Đạt chuẩn" : "Chờ duyệt"}
                     </Badge>
                   </TableCell>
                   <TableCell>

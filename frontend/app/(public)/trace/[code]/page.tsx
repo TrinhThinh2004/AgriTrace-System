@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Leaf, Sprout, Package, Tractor, CheckCircle } from "lucide-react";
 
 const traceSteps = [
-  { title: "Seed Origin", description: "Certified seed from Vietnam Seed Corp", icon: Sprout },
-  { title: "Farm Cultivation", description: "VietGAP compliant cultivation process", icon: Tractor },
-  { title: "Harvest & Quality", description: "Grade A quality, cold storage 4°C", icon: Leaf },
-  { title: "Packaging", description: "Sealed and labeled for distribution", icon: Package },
-  { title: "Certified", description: "Verified by certified inspector", icon: ShieldCheck },
+  { title: "Nguồn giống", description: "Giống được chứng nhận", icon: Sprout },
+  { title: "Canh tác", description: "Quy trình canh tác đạt chuẩn VietGAP", icon: Tractor },
+  { title: "Thu hoạch & Chất lượng", description: "Chất lượng hạng A, bảo quản lạnh 4°C", icon: Leaf },
+  { title: "Đóng gói", description: "Đóng gói kín và dán nhãn phân phối", icon: Package },
+  { title: "Chứng nhận", description: "Được kiểm tra và xác thực bởi thanh tra", icon: ShieldCheck },
 ];
 
 export default function PublicTrace() {
@@ -27,8 +27,8 @@ export default function PublicTrace() {
             <Tractor className="h-6 w-6" />
             <span className="text-xl font-bold">AgriTrace</span>
           </div>
-          <h1 className="text-2xl font-bold mb-1">Product Journey</h1>
-          <p className="text-sm opacity-80">Trace the complete story of your product from seed to shelf</p>
+          <h1 className="text-2xl font-bold mb-1">Hành trình sản phẩm</h1>
+          <p className="text-sm opacity-80">Tra cứu toàn bộ hành trình sản phẩm từ giống đến kệ hàng</p>
         </div>
       </div>
 
@@ -45,19 +45,19 @@ export default function PublicTrace() {
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="bg-muted rounded-lg p-3">
-                <p className="text-muted-foreground text-xs">Farm</p>
+                <p className="text-muted-foreground text-xs">Nông trại</p>
                 <p className="font-medium">{batch.farmName}</p>
               </div>
               <div className="bg-muted rounded-lg p-3">
-                <p className="text-muted-foreground text-xs">Area</p>
+                <p className="text-muted-foreground text-xs">Diện tích</p>
                 <p className="font-medium">{batch.area}</p>
               </div>
               <div className="bg-muted rounded-lg p-3">
-                <p className="text-muted-foreground text-xs">Planted</p>
+                <p className="text-muted-foreground text-xs">Ngày gieo</p>
                 <p className="font-medium">{batch.plantingDate}</p>
               </div>
               <div className="bg-muted rounded-lg p-3">
-                <p className="text-muted-foreground text-xs">Harvested</p>
+                <p className="text-muted-foreground text-xs">Ngày thu hoạch</p>
                 <p className="font-medium">{batch.harvestDate || "—"}</p>
               </div>
             </div>
@@ -66,7 +66,7 @@ export default function PublicTrace() {
 
         <Card>
           <CardContent className="p-6">
-            <h2 className="font-semibold mb-4">Product Timeline</h2>
+            <h2 className="font-semibold mb-4">Tiến trình sản phẩm</h2>
             {traceSteps.map((s, i) => (
               <TimelineStep
                 key={i}
@@ -84,9 +84,9 @@ export default function PublicTrace() {
           <Card className="border-success/30">
             <CardContent className="p-6 text-center">
               <CheckCircle className="h-10 w-10 text-success mx-auto mb-2" />
-              <h3 className="font-semibold text-success">Digitally Verified</h3>
-              <p className="text-sm text-muted-foreground mt-1">This product has been certified by an authorized inspector</p>
-              <Badge className="mt-2 bg-success text-success-foreground">VietGAP Certified</Badge>
+              <h3 className="font-semibold text-success">Đã xác thực</h3>
+              <p className="text-sm text-muted-foreground mt-1">Sản phẩm này đã được xác thực bởi cơ quan kiểm định có thẩm quyền</p>
+              <Badge className="mt-2 bg-success text-success-foreground">Đạt chuẩn VietGAP</Badge>
             </CardContent>
           </Card>
         )}

@@ -23,7 +23,7 @@ export function TimelineStep({ step, title, description, status, isLast }: Timel
         </div>
         {!isLast && (
           <div className={cn(
-            "w-0.5 flex-1 min-h-[2rem]",
+            "w-0.5 flex-1 min-h-8",
             status === "completed" ? "bg-primary" : "bg-border"
           )} />
         )}

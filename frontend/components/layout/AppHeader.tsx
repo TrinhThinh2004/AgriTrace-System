@@ -8,18 +8,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppSidebar } from "./SidebarContext";
 
 const breadcrumbMap: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/farms": "Farms Management",
-  "/crops": "Crop Varieties",
-  "/users": "User Management",
-  "/standards": "Standards",
+  "/dashboard": "Trang chủ",
+  "/farms": "Quản lý trang trại",
+  "/crops": "Giống cây trồng",
+  "/users": "Quản lý người dùng",
+  "/standards": "Tiêu chuẩn",
 };
 
 export function AppHeader() {
   const { user } = useAuth();
   const { collapsed, toggle } = useAppSidebar();
   const pathname = usePathname() || "";
-  const pageName = breadcrumbMap[pathname] || "Page";
+  const pageName = breadcrumbMap[pathname] || "Trang";
   const isBatchDetail = pathname.startsWith("/batch/");
 
   return (
@@ -38,7 +38,7 @@ export function AppHeader() {
           <span>AgriTrace</span>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground font-medium">
-            {isBatchDetail ? "Batch Detail" : pageName}
+            {isBatchDetail ? "Chi tiết lô hàng" : pageName}
           </span>
         </div>
       </div>

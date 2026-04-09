@@ -26,36 +26,36 @@ export default function FarmerDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Farmer Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Manage your production batches</p>
+          <h1 className="text-2xl font-bold">Trang nông dân</h1>
+          <p className="text-sm text-muted-foreground">Quản lý các lô sản xuất</p>
         </div>
-        <Button onClick={() => toast({ title: "Create Batch", description: "New batch form would open here" })}>
-          <Plus className="h-4 w-4 mr-1" /> New Batch
+        <Button onClick={() => toast({ title: "Tạo lô hàng", description: "Mở biểu mẫu tạo lô hàng mới" })}>
+          <Plus className="h-4 w-4 mr-1" /> Tạo lô mới
         </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatsCard title="Total Batches" value={mockBatches.length} icon={<Package className="h-5 w-5" />} />
-        <StatsCard title="Certified" value={mockBatches.filter(b => b.status === "certified").length} icon={<CheckCircle className="h-5 w-5" />} />
-        <StatsCard title="In Progress" value={mockBatches.filter(b => b.status === "in_progress").length} icon={<Clock className="h-5 w-5" />} />
+        <StatsCard title="Tổng lô hàng" value={mockBatches.length} icon={<Package className="h-5 w-5" />} />
+        <StatsCard title="Đạt chuẩn" value={mockBatches.filter(b => b.status === "certified").length} icon={<CheckCircle className="h-5 w-5" />} />
+        <StatsCard title="Đang xử lý" value={mockBatches.filter(b => b.status === "in_progress").length} icon={<Clock className="h-5 w-5" />} />
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search batches..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input placeholder="Tìm kiếm lô hàng..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Filter" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="certified">Certified</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            <SelectItem value="draft">Nháp</SelectItem>
+            <SelectItem value="in_progress">Đang xử lý</SelectItem>
+            <SelectItem value="completed">Hoàn thành</SelectItem>
+            <SelectItem value="certified">Đạt chuẩn</SelectItem>
+            <SelectItem value="rejected">Từ chối</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -66,7 +66,7 @@ export default function FarmerDashboard() {
         ))}
         {filtered.length === 0 && (
           <div className="col-span-full text-center py-12 text-muted-foreground">
-            No batches found matching your criteria.
+            Không tìm thấy lô hàng phù hợp.
           </div>
         )}
       </div>
