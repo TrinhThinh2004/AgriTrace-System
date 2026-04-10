@@ -2,12 +2,11 @@
 import Link from "next/link";
 import {
   LayoutDashboard, Leaf, ClipboardCheck, QrCode, Building2, Sprout,
-  Users, Shield, Tractor, LogOut,
+  Users, Shield, Tractor,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSidebar } from "./SidebarContext";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/mockData";
@@ -33,7 +32,7 @@ const menuItems: Record<Role, { title: string; url: string; icon: React.ElementT
 };
 
 export function AppSidebar() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { collapsed } = useAppSidebar();
   const role = user?.role || "admin";
   const items = menuItems[role] || [];
@@ -83,36 +82,21 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
+      {/* Footer — user info only, logout moved to header avatar */}
       <div className="p-3 border-t border-sidebar-border/50">
         {user && (
-          <div className={cn("space-y-2", collapsed && "flex flex-col items-center")}>
-            <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-2")}>
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
-                  {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              {!collapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate">{user.name}</p>
-                  <p className="text-[10px] text-sidebar-muted capitalize">{user.role}</p>
-                </div>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={logout}
-              title={collapsed ? "Đăng xuất" : undefined}
-              className={cn(
-                "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent",
-                collapsed ? "h-9 w-9 p-0" : "w-full justify-start text-xs",
-              )}
-            >
-              <LogOut className={cn("h-4 w-4", !collapsed && "mr-2")} />
-              {!collapsed && "Đăng xuất"}
-            </Button>
+          <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-2")}>
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+                {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{user.name}</p>
+                <p className="text-[10px] text-sidebar-muted capitalize">{user.role}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
