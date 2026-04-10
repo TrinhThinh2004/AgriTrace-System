@@ -2,19 +2,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SignaturePanel } from "@/components/SignaturePanel";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
-import { mockBatches } from "@/lib/mockData";
+import { Eye, Loader2 } from "lucide-react";
+import { useBatches } from "@/hooks/use-batches";
+import { useFarms } from "@/hooks/use-farms";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const STATUS_ORDER: Record<string, number> = {
+  SEEDING: 1, GROWING: 2, HARVESTED: 3, INSPECTED: 4, PACKED: 5, SHIPPED: 6,
+};
+
 export default function InspectorDashboard() {
   const router = useRouter();
-  const pendingBatches = mockBatches.filter(b => b.status === "completed" || b.status === "in_progress");
+  const { data: batchData, isLoading } = useBatches();
+  const { data: farmData } = useFarms();
   const [selected, setSelected] = useState<string | null>(null);
-  const selectedBatch = mockBatches.find(b => b.id === selected);
+
+  const batches = batchData?.items ?? [];
+  const farms = farmData?.items ?? [];
+
+  // Inspector xem các batch cần kiểm định (HARVESTED) hoặc đang xử lý
+  const pendingBatches = batches.filter((b) => b.status === "HARVESTED" || b.status === "GROWING");
+  const selectedBatch = batches.find((b) => b.id === selected);
+  const selectedFarm = selectedBatch ? farms.find((f) => f.id === selectedBatch.farm_id) : undefined;
 
   return (
     <div className="space-y-6">
@@ -29,34 +41,38 @@ export default function InspectorDashboard() {
             <CardTitle className="text-base">Chờ xem xét ({pendingBatches.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lô hàng</TableHead>
-                  <TableHead>Giống cây</TableHead>
-                  <TableHead>Trang trại</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Bước</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingBatches.map(b => (
-                  <TableRow key={b.id} className={selected === b.id ? "bg-accent" : ""}>
-                    <TableCell className="font-mono text-sm">{b.batchCode}</TableCell>
-                    <TableCell className="text-sm">{b.cropVariety}</TableCell>
-                    <TableCell className="text-sm">{b.farmName}</TableCell>
-                    <TableCell><StatusBadge status={b.status} /></TableCell>
-                    <TableCell className="text-sm">{b.currentStep}/4</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => setSelected(b.id)}>
-                        <Eye className="h-4 w-4 mr-1" /> Xem xét
-                      </Button>
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lô hàng</TableHead>
+                    <TableHead>Tên</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead>Bước</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {pendingBatches.map((b) => (
+                    <TableRow key={b.id} className={selected === b.id ? "bg-accent" : ""}>
+                      <TableCell className="font-mono text-sm">{b.batch_code}</TableCell>
+                      <TableCell className="text-sm">{b.name}</TableCell>
+                      <TableCell><StatusBadge status={b.status} /></TableCell>
+                      <TableCell className="text-sm">{STATUS_ORDER[b.status] ?? 1}/6</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => setSelected(b.id)}>
+                          <Eye className="h-4 w-4 mr-1" /> Xem xét
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -65,14 +81,16 @@ export default function InspectorDashboard() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base font-mono">{selectedBatch.batchCode}</CardTitle>
+                  <CardTitle className="text-base font-mono">{selectedBatch.batch_code}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Giống cây</span><span>{selectedBatch.cropVariety}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Trang trại</span><span>{selectedBatch.farmName}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Nông dân</span><span>{selectedBatch.farmerName}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Ngày trồng</span><span>{selectedBatch.plantingDate}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Diện tích</span><span>{selectedBatch.area}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Tên</span><span>{selectedBatch.name}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Trang trại</span><span>{selectedFarm?.name ?? "—"}</span></div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Ngày trồng</span>
+                    <span>{selectedBatch.planting_date ? new Date(selectedBatch.planting_date).toLocaleDateString("vi-VN") : "—"}</span>
+                  </div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Đơn vị</span><span>{selectedBatch.unit}</span></div>
                   <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => router.push(`/batch/${selectedBatch.id}`)}>
                     Xem chi tiết
                   </Button>
