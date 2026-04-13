@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ActivityLogModule } from './activity-log/activity-log.module';
+import { InspectionModule } from './inspection/inspection.module';
 
 /**
- * TraceModule trong API Gateway chỉ là placeholder.
- * Entities và business logic nằm trong trace-service.
- * Mở rộng sau khi trace-service được implement gRPC.
+ * TraceModule trong API Gateway — gom 2 submodule proxy REST → gRPC trace-service.
+ * gRPC clients (TRACE_SERVICE, PRODUCT_SERVICE) đã được đăng ký Global trong PolicyModule.
  */
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [ActivityLogModule, InspectionModule],
 })
 export class TraceModule {}

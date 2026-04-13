@@ -12,37 +12,37 @@ import { User } from './user.entity';
 @Entity('user_profiles')
 export class UserProfile {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid' })
-  user_id: string;
+  user_id!: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  avatar_url: string;
+  avatar_url!: string;
 
   @Column({ type: 'text', nullable: true })
-  address: string;
+  address!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  farm_name: string;
+  farm_name!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  farm_location: string;
+  farm_location!: string;
 
   @Column({ type: 'jsonb', nullable: true, default: [] })
-  certifications: object[];
+  certifications!: object[];
 
   @Column({ type: 'text', nullable: true })
-  bio: string;
+  bio!: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updated_at: Date;
+  updated_at!: Date;
 
   // ── Relations ──
   @OneToOne(() => User, (user) => user.profile, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 }

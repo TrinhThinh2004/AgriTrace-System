@@ -34,7 +34,7 @@ export class OwnershipGuard implements CanActivate, OnModuleInit {
   private policyService!: ProductPolicyGrpc;
   private cache = new Map<string, { allowed: boolean; exp: number }>();
   private readonly TTL_MS = 30_000;
-
+  
   constructor(
     private readonly reflector: Reflector,
     @Inject('PRODUCT_SERVICE') private readonly client: ClientGrpc,
@@ -44,7 +44,7 @@ export class OwnershipGuard implements CanActivate, OnModuleInit {
     this.policyService =
       this.client.getService<ProductPolicyGrpc>('ProductService');
   }
-
+  // canActivate sẽ thực hiện kiểm tra ownership dựa trên metadata từ @OwnsFarm hoặc @OwnsBatch
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // Public 
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [

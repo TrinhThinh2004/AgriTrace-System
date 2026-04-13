@@ -68,7 +68,7 @@ export class CropCategoryService {
     try {
       await this.repo.remove(cc);
     } catch (err: any) {
-      // FK RESTRICT — vẫn còn batch reference
+      // Nếu xóa thất bại do ràng buộc khóa ngoại
       if (err?.code === '23503') {
         throw new ConflictException(
           'Không thể xoá danh mục đang được sử dụng bởi batch. Đổi status sang INACTIVE thay vì xoá.',
@@ -88,7 +88,7 @@ export class CropCategoryService {
     const qb = this.repo.createQueryBuilder('cc');
     if (status) qb.andWhere('cc.status = :status', { status });
     qb.orderBy('cc.created_at', 'DESC');
-
+    // Pagination
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
     qb.skip((safePage - 1) * safeLimit).take(safeLimit);

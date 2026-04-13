@@ -14,40 +14,40 @@ import { UserKey } from './user-key.entity';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
-  email: string;
+  email!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  password_hash: string;
+  password_hash!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  full_name: string;
+  full_name!: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  phone: string;
+  phone!: string;
 
   @Column({ type: 'enum', enum: Role, default: Role.FARMER })
-  role: Role;
+  role!: Role;
 
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
-  status: UserStatus;
+  status!: UserStatus;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updated_at: Date;
+  updated_at!: Date;
 
   /** Hash của refresh token hiện tại — null khi đã logout */
   @Column({ type: 'varchar', length: 255, nullable: true })
-  refresh_token_hash: string;
+  refresh_token_hash!: string;
 
   // ── Relations ──
   @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
-  profile: UserProfile;
+  profile!: UserProfile;
 
   @OneToMany(() => UserKey, (key) => key.user, { cascade: true })
-  keys: UserKey[];
+  keys!: UserKey[];
 }

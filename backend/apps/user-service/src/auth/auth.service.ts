@@ -112,7 +112,7 @@ export class AuthService {
 
     const isTokenValid = await bcrypt.compare(dto.refresh_token, user.refresh_token_hash);
     if (!isTokenValid) {
-      // Stolen token → revoke immediately
+      // Nếu refresh token không hợp lệ thì sẽ xóa hash trong database
       await this.userRepo.update(dto.user_id, { refresh_token_hash: undefined });
       throw new UnauthorizedException('Refresh token không hợp lệ. Vui lòng đăng nhập lại');
     }
@@ -189,12 +189,16 @@ export class AuthService {
 
     return { access_token, refresh_token };
   }
+  // Rotation của refresh token: 
+  // mỗi lần dùng refresh token để lấy access token mới thì sẽ tạo một refresh token mới luôn,
+  // và hash của nó sẽ được lưu vào database. 
 
   private async updateRefreshTokenHash(userId: string, refreshToken: string) {
     const hash = await bcrypt.hash(refreshToken, 12);
     await this.userRepo.update(userId, { refresh_token_hash: hash });
   }
-
+  // sanitizeUser sẽ loại bỏ các trường nhạy cảm 
+  // trước khi trả về thông tin user
   private sanitizeUser(user: User) {
     const { password_hash, refresh_token_hash, ...safeUser } = user;
     return safeUser;

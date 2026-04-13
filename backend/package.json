@@ -21,7 +21,12 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "seed": "ts-node -r tsconfig-paths/register seeds/index.ts",
+    "seed:fresh": "ts-node -r tsconfig-paths/register seeds/index.ts --fresh",
+    "seed:users": "ts-node -r tsconfig-paths/register seeds/user.seed.ts",
+    "seed:products": "ts-node -r tsconfig-paths/register seeds/product.seed.ts",
+    "seed:traces": "ts-node -r tsconfig-paths/register seeds/trace.seed.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",

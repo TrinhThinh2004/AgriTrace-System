@@ -4,30 +4,105 @@ package trace;
 
 // ── Trace Service ──────────────────────────────────────────────────
 service TraceService {
-  rpc GetActivityLogsByBatch (GetByBatchRequest)  returns (ActivityLogListResponse);
-  rpc GetInspectionsByBatch  (GetByBatchRequest)  returns (InspectionListResponse);
+  // ── Read theo batch (dùng cho truy xuất QR public) ──
+  rpc GetActivityLogsByBatch (GetByBatchRequest)              returns (ActivityLogListResponse);
+  rpc GetInspectionsByBatch  (GetByBatchRequest)              returns (InspectionListResponse);
+
+  // ── ActivityLog CRUD + Sign ──
+  rpc CreateActivityLog      (CreateActivityLogRequest)       returns (ActivityLogResponse);
+  rpc UpdateActivityLog      (UpdateActivityLogRequest)       returns (ActivityLogResponse);
+  rpc DeleteActivityLog      (IdRequest)                      returns (EmptyResponse);
+  rpc GetActivityLogById     (IdRequest)                      returns (ActivityLogResponse);
+  rpc ListActivityLogs       (ListActivityLogsRequest)        returns (ListActivityLogsResponse);
+  rpc SignActivityLog        (SignRequest)                    returns (ActivityLogResponse);
+
+  // ── Inspection CRUD + Sign ──
+  rpc CreateInspection       (CreateInspectionRequest)        returns (InspectionResponse);
+  rpc UpdateInspection       (UpdateInspectionRequest)        returns (InspectionResponse);
+  rpc DeleteInspection       (IdRequest)                      returns (EmptyResponse);
+  rpc GetInspectionById      (IdRequest)                      returns (InspectionResponse);
+  rpc ListInspections        (ListInspectionsRequest)         returns (ListInspectionsResponse);
+  rpc SignInspection         (SignRequest)                    returns (InspectionResponse);
 }
 
 // ── Common ─────────────────────────────────────────────────────────
+message EmptyResponse {}
+
+message IdRequest {
+  string id = 1;
+}
+
 message GetByBatchRequest {
   string batch_id = 1;
 }
 
+message Pagination {
+  int32 page  = 1;
+  int32 limit = 2;
+  int32 total = 3;
+}
+
+message SignRequest {
+  string id                = 1;
+  string digital_signature = 2;
+  string signed_at         = 3;
+}
+
+message InputUsed {
+  string name     = 1;
+  string quantity = 2;
+  string unit     = 3;
+}
+
 // ── Activity Log ────────────────────────────────────────────────────
 message ActivityLogResponse {
-  string id            = 1;
-  string batch_id      = 2;
-  string activity_type = 3;
-  string performed_by  = 4;
-  string performed_at  = 5;
-  string location      = 6;
-  string notes         = 7;
-  bool   is_signed     = 8;
-  string signed_at     = 9;
+  string id                     = 1;
+  string batch_id               = 2;
+  string activity_type          = 3;
+  string performed_by           = 4;
+  string performed_at           = 5;
+  string location               = 6;
+  string notes                  = 7;
+  repeated InputUsed inputs_used = 8;
+  bool   is_signed              = 9;
+  string signed_at              = 10;
+  string created_at             = 11;
 }
 
 message ActivityLogListResponse {
   repeated ActivityLogResponse logs = 1;
+}
+
+message CreateActivityLogRequest {
+  string batch_id                = 1;
+  string activity_type           = 2;
+  string performed_by            = 3;
+  string performed_at            = 4;
+  string location                = 5;
+  string notes                   = 6;
+  repeated InputUsed inputs_used = 7;
+}
+
+message UpdateActivityLogRequest {
+  string id                      = 1;
+  string activity_type           = 2;
+  string performed_at            = 3;
+  string location                = 4;
+  string notes                   = 5;
+  repeated InputUsed inputs_used = 6;
+}
+
+message ListActivityLogsRequest {
+  string batch_id      = 1;
+  string activity_type = 2;
+  string performed_by  = 3;
+  int32  page          = 4;
+  int32  limit         = 5;
+}
+
+message ListActivityLogsResponse {
+  repeated ActivityLogResponse items = 1;
+  Pagination pagination              = 2;
 }
 
 // ── Inspection ──────────────────────────────────────────────────────
@@ -37,12 +112,51 @@ message InspectionResponse {
   string inspector_id    = 3;
   string inspection_type = 4;
   string result          = 5;
-  string conducted_at    = 6;
-  string notes           = 7;
-  bool   is_signed       = 8;
-  string signed_at       = 9;
+  string scheduled_at    = 6;
+  string conducted_at    = 7;
+  string notes           = 8;
+  string report_url      = 9;
+  bool   is_signed       = 10;
+  string signed_at       = 11;
+  string created_at      = 12;
+  string updated_at      = 13;
 }
 
 message InspectionListResponse {
   repeated InspectionResponse inspections = 1;
+}
+
+message CreateInspectionRequest {
+  string batch_id        = 1;
+  string inspector_id    = 2;
+  string inspection_type = 3;
+  string result          = 4;
+  string scheduled_at    = 5;
+  string conducted_at    = 6;
+  string notes           = 7;
+  string report_url      = 8;
+}
+
+message UpdateInspectionRequest {
+  string id              = 1;
+  string inspection_type = 2;
+  string result          = 3;
+  string scheduled_at    = 4;
+  string conducted_at    = 5;
+  string notes           = 6;
+  string report_url      = 7;
+}
+
+message ListInspectionsRequest {
+  string batch_id        = 1;
+  string inspector_id    = 2;
+  string inspection_type = 3;
+  string result          = 4;
+  int32  page            = 5;
+  int32  limit           = 6;
+}
+
+message ListInspectionsResponse {
+  repeated InspectionResponse items = 1;
+  Pagination pagination             = 2;
 }

@@ -12,7 +12,7 @@ import { AuthController } from './auth.controller';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserProfile, UserKey]),
-    JwtModule.register({}), // secrets được truyền khi signAsync
+    JwtModule.register({}), 
   ],
   controllers: [AuthController],
   providers: [AuthService],

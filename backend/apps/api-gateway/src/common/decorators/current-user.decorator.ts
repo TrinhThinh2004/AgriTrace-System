@@ -5,6 +5,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  * Usage: @CurrentUser() user: User
  * Hoặc:  @CurrentUser('email') email: string
  */
+// Hàm này lấy thông tin user đã được passport
 export const CurrentUser = createParamDecorator(
   (data: string | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();

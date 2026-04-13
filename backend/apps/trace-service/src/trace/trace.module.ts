@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ActivityLog } from '../entities/activity-log.entity';
-import { Inspection } from '../entities/inspection.entity';
+import { ActivityLogModule } from '../activity-log/activity-log.module';
+import { InspectionModule } from '../inspection/inspection.module';
 
 /**
  * TraceModule — quản lý nhật ký hoạt động và kiểm định.
- * gRPC handlers sẽ được implement trong sprint tiếp theo.
+ * Gom 2 sub-module ActivityLog + Inspection, mỗi sub-module tự import
+ * TypeOrmModule.forFeature cho entity của nó.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([ActivityLog, Inspection])],
-  controllers: [],
-  providers: [],
+  imports: [ActivityLogModule, InspectionModule],
 })
 export class TraceModule {}
