@@ -31,7 +31,7 @@ interface UserServiceGrpc {
 
 @Injectable()
 export class AuthService implements OnModuleInit {
-  private userService: UserServiceGrpc;
+  private userService!: UserServiceGrpc;
 
   constructor(
     @Inject('USER_SERVICE')

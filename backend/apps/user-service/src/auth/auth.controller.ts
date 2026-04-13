@@ -100,6 +100,48 @@ export class AuthController {
     };
   }
 
+  // rpc ListUsers
+  @GrpcMethod('UserService', 'ListUsers')
+  async listUsers(data: { role?: string; page?: number; limit?: number }) {
+    return this.authService.listUsers(data);
+  }
+
+  // rpc CreateUser
+  @GrpcMethod('UserService', 'CreateUser')
+  async createUser(data: { email: string; password?: string; full_name: string; phone?: string; role: string }) {
+    const user = await this.authService.createUser(data);
+    return {
+      id:         user.id,
+      email:      user.email,
+      full_name:  user.full_name,
+      role:       user.role,
+      status:     user.status,
+      phone:      user.phone ?? '',
+      created_at: user.created_at?.toISOString() ?? '',
+    };
+  }
+
+  // rpc UpdateUser
+  @GrpcMethod('UserService', 'UpdateUser')
+  async updateUser(data: { id: string; full_name?: string; phone?: string; role?: string; status?: string }) {
+    const user = await this.authService.updateUser(data.id, data);
+    return {
+      id:         user.id,
+      email:      user.email,
+      full_name:  user.full_name,
+      role:       user.role,
+      status:     user.status,
+      phone:      user.phone ?? '',
+      created_at: user.created_at?.toISOString() ?? '',
+    };
+  }
+
+  // rpc DeleteUser
+  @GrpcMethod('UserService', 'DeleteUser')
+  async deleteUser(data: { id: string }) {
+    return this.authService.deleteUser(data.id);
+  }
+
   // rpc ValidateToken
   @GrpcMethod('UserService', 'ValidateToken')
   async validateToken(data: { token: string }) {

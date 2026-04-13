@@ -78,6 +78,12 @@ export class BatchController {
     return toResponse(batch);
   }
 
+  @GrpcMethod('ProductService', 'GetBatchByCode')
+  async getByCode(data: { batch_code: string }) {
+    const batch = await this.service.findByCode(data.batch_code);
+    return toResponse(batch);
+  }
+
   @GrpcMethod('ProductService', 'CheckBatchOwnership')
   async checkBatchOwnership(data: { user_id: string; batch_id: string }) {
     const allowed = await this.service.checkOwnership(data.user_id, data.batch_id);

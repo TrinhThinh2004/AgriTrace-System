@@ -152,6 +152,58 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
+  // ── CRUD Methods for Admin ──
+  async listUsers({ role, page = 1, limit = 50 }: { role?: string; page?: number; limit?: number }) {
+    const [users, total] = await this.userRepo.findAndCount({
+      where: role ? { role: role as Role } : {},
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { created_at: 'DESC' },
+    });
+    return {
+      items: users.map(u => ({
+        ...this.sanitizeUser(u),
+        phone: u.phone ?? '',
+        created_at: u.created_at.toISOString(),
+      })),
+      pagination: { page, limit, total },
+    };
+  }
+
+  async createUser(dto: any) {
+    const existing = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('Email đã tồn tại');
+
+    const passwordHash = await bcrypt.hash(dto.password || '123456', 12);
+    const user = this.userRepo.create({
+      email: dto.email,
+      password_hash: passwordHash,
+      full_name: dto.full_name,
+      phone: dto.phone,
+      role: dto.role || Role.FARMER,
+      status: UserStatus.ACTIVE,
+    });
+    const saved = await this.userRepo.save(user);
+    await this.profileRepo.save(this.profileRepo.create({ user_id: saved.id }));
+    return saved;
+  }
+
+  async updateUser(id: string, dto: any) {
+    const user = await this.userRepo.findOne({ where: { id } });
+    if (!user) throw new UnauthorizedException('Không tìm thấy user');
+    if (dto.full_name) user.full_name = dto.full_name;
+    if (dto.phone) user.phone = dto.phone;
+    if (dto.role) user.role = dto.role;
+    if (dto.status) user.status = dto.status;
+    return this.userRepo.save(user);
+  }
+
+  async deleteUser(id: string) {
+    // In real app, consider soft delete instead
+    await this.userRepo.delete(id);
+    return { message: 'Đã xóa người dùng' };
+  }
+
 //  Validate token method (dành cho API Gateway khi nhận JWT từ client)
   async validateToken(token: string) {
     try {

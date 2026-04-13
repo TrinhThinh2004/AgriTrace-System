@@ -152,7 +152,7 @@ export interface BatchListParams extends ListParams {
 
 // ── Helper ──
 
-function qs(params: Record<string, unknown>): string {
+function qs(params: Record<string, any>): string {
   const entries = Object.entries(params).filter(
     ([, v]) => v !== undefined && v !== null && v !== "",
   );

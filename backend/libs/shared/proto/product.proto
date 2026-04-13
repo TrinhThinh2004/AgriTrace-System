@@ -2,28 +2,29 @@ syntax = "proto3";
 
 package product;
 
-// ── Product Service ──
+// Product Service
 service ProductService {
   // ABAC ownership checks (used by api-gateway OwnershipGuard)
   rpc GetBatchById         (GetBatchByIdRequest)         returns (BatchResponse);
+  rpc GetBatchByCode       (GetBatchByCodeRequest)       returns (BatchResponse);
   rpc GetFarmById          (GetFarmByIdRequest)          returns (FarmResponse);
   rpc CheckFarmOwnership   (CheckFarmOwnershipRequest)   returns (OwnershipResponse);
   rpc CheckBatchOwnership  (CheckBatchOwnershipRequest)  returns (OwnershipResponse);
 
-  // ── Crop Category CRUD ──
+  // Crop Category CRUD
   rpc CreateCropCategory   (CreateCropCategoryRequest)   returns (CropCategoryResponse);
   rpc UpdateCropCategory   (UpdateCropCategoryRequest)   returns (CropCategoryResponse);
   rpc DeleteCropCategory   (DeleteCropCategoryRequest)   returns (EmptyResponse);
   rpc GetCropCategoryById  (GetCropCategoryByIdRequest)  returns (CropCategoryResponse);
   rpc ListCropCategories   (ListCropCategoriesRequest)   returns (ListCropCategoriesResponse);
 
-  // ── Farm CRUD ──
+  // Farm CRUD
   rpc CreateFarm           (CreateFarmRequest)           returns (FarmResponse);
   rpc UpdateFarm           (UpdateFarmRequest)           returns (FarmResponse);
   rpc DeleteFarm           (DeleteFarmRequest)           returns (EmptyResponse);
   rpc ListFarms            (ListFarmsRequest)            returns (ListFarmsResponse);
 
-  // ── Batch CRUD ──
+  //Batch CRUD 
   rpc CreateBatch          (CreateBatchRequest)          returns (BatchResponse);
   rpc UpdateBatch          (UpdateBatchRequest)          returns (BatchResponse);
   rpc DeleteBatch          (DeleteBatchRequest)          returns (EmptyResponse);
@@ -31,7 +32,7 @@ service ProductService {
   rpc TransitionBatchStatus(TransitionBatchStatusRequest) returns (BatchResponse);
 }
 
-// ───────── Common ─────────
+// Common 
 message EmptyResponse {}
 
 message Pagination {
@@ -175,6 +176,10 @@ message BatchResponse {
 
 message GetBatchByIdRequest {
   string batch_id = 1;
+}
+
+message GetBatchByCodeRequest {
+  string batch_code = 1;
 }
 
 message CreateBatchRequest {

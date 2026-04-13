@@ -7,15 +7,22 @@ import {
   Param,
   Body,
   Query,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
+import * as QRCode from 'qrcode';
+import { ConfigService } from '@nestjs/config';
 import { BatchService } from './batch.service';
 import { CreateBatchDto, UpdateBatchDto, TransitionBatchDto } from './dto';
-import { CurrentUser, Roles, OwnsBatch, FarmerOnly } from '../../../common/decorators';
+import { CurrentUser, Roles, OwnsBatch, FarmerOnly, Public } from '../../../common/decorators';
 import { Role } from '../../../common/enums';
 
 @Controller('batches')
 export class BatchController {
-  constructor(private readonly service: BatchService) {}
+  constructor(
+    private readonly service: BatchService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @FarmerOnly()
   @Post()
@@ -65,5 +72,31 @@ export class BatchController {
   @Delete(':id')
   delete(@Param('id') id: string, @CurrentUser() user: any) {
     return this.service.delete(id, user);
+  }
+
+  @Public()
+  @Get(':id/qr')
+  async getQrCode(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    // Lấy batch_code từ batch (endpoint public)
+    const batch = await this.service.findByIdPublic(id);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const traceUrl = `${frontendUrl}/trace/${batch.batch_code}`;
+
+    const qrBuffer = await QRCode.toBuffer(traceUrl, {
+      type: 'png',
+      width: 400,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+    });
+
+    res.set({
+      'Content-Type': 'image/png',
+      'Content-Disposition': `inline; filename="qr-${batch.batch_code}.png"`,
+      'Cache-Control': 'public, max-age=86400',
+    });
+    res.send(qrBuffer);
   }
 }

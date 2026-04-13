@@ -37,7 +37,7 @@ export async function seedUsers() {
       id: ADMIN_USER_ID,
       email: 'admin@gmail.com',
       password_hash: adminPasswordHash,
-      full_name: 'Nguyen Van Admin',
+      full_name: 'Admin',
       phone: '0901000001',
       role: Role.ADMIN,
       status: UserStatus.ACTIVE,

@@ -23,7 +23,7 @@ type AuthUser = { id: string; role: string };
 
 @Injectable()
 export class InspectionService implements OnModuleInit {
-  private trace: TraceServiceGrpc;
+  private trace!: TraceServiceGrpc;
 
   constructor(
     @Inject('TRACE_SERVICE') private readonly traceClient: ClientGrpc,

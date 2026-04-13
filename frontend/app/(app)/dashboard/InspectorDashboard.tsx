@@ -96,7 +96,7 @@ export default function InspectorDashboard() {
                   </Button>
                 </CardContent>
               </Card>
-              <SignaturePanel />
+              <SignaturePanel batchId={selectedBatch.id} />
             </>
           ) : (
             <Card>

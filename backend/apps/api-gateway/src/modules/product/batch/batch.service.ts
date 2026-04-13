@@ -8,6 +8,7 @@ interface ProductServiceGrpc {
   updateBatch(data: any, metadata?: any): Observable<any>;
   deleteBatch(data: any, metadata?: any): Observable<any>;
   getBatchById(data: any, metadata?: any): Observable<any>;
+  getBatchByCode(data: any, metadata?: any): Observable<any>;
   listBatches(data: any, metadata?: any): Observable<any>;
   transitionBatchStatus(data: any, metadata?: any): Observable<any>;
 }
@@ -64,6 +65,18 @@ export class BatchService implements OnModuleInit {
   ) {
     return firstValueFrom(
       this.grpc.transitionBatchStatus({ id, ...dto }, withAuthMetadata(user)),
+    );
+  }
+
+  findByCode(batchCode: string) {
+    return firstValueFrom(
+      this.grpc.getBatchByCode({ batch_code: batchCode }),
+    );
+  }
+
+  findByIdPublic(batchId: string) {
+    return firstValueFrom(
+      this.grpc.getBatchById({ batch_id: batchId }),
     );
   }
 }

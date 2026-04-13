@@ -276,6 +276,15 @@ export class BatchService {
     if (!batch) throw new NotFoundException(`Batch ${id} không tìm thấy`);
     return batch;
   }
+  async findByCode(batchCode: string) {
+    const batch = await this.batchRepo.findOne({
+      where: { batch_code: batchCode },
+      relations: ['farm', 'crop_category'],
+    });
+    if (!batch) throw new NotFoundException(`Batch với mã "${batchCode}" không tìm thấy`);
+    return batch;
+  }
+
   // ABAC kiểm tra ownership batch thông qua farm chứa batch đó
   async checkOwnership(userId: string, batchId: string): Promise<boolean> {
     const row = await this.batchRepo

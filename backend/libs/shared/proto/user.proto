@@ -10,9 +10,13 @@ service UserService {
   rpc RefreshTokens (RefreshTokensRequest)  returns (TokenPairResponse);
   rpc Logout        (LogoutRequest)         returns (MessageResponse);
 
-  // User RPCs
+  // User CRUD
   rpc GetProfile    (GetProfileRequest)     returns (UserResponse);
   rpc GetUserById   (GetUserByIdRequest)    returns (UserResponse);
+  rpc ListUsers     (ListUsersRequest)      returns (ListUsersResponse);
+  rpc CreateUser    (CreateUserRequest)     returns (UserResponse);
+  rpc UpdateUser    (UpdateUserRequest)     returns (UserResponse);
+  rpc DeleteUser    (DeleteUserRequest)     returns (MessageResponse);
 
   // Internal service-to-service RPCs
   rpc ValidateToken (ValidateTokenRequest)  returns (ValidateTokenResponse);
@@ -84,4 +88,42 @@ message ValidateTokenResponse {
   string user_id = 2;
   string email   = 3;
   string role    = 4;
+}
+
+// ── CRUD Messages ─────────────────────────────────────────────────
+message ListUsersRequest {
+  string role   = 1;
+  int32  page   = 2;
+  int32  limit  = 3;
+}
+
+message ListUsersResponse {
+  repeated UserResponse items = 1;
+  Pagination pagination       = 2;
+}
+
+message Pagination {
+  int32 page  = 1;
+  int32 limit = 2;
+  int32 total = 3;
+}
+
+message CreateUserRequest {
+  string email     = 1;
+  string password  = 2;
+  string full_name = 3;
+  string phone     = 4;
+  string role      = 5;
+}
+
+message UpdateUserRequest {
+  string id        = 1;
+  string full_name = 2;
+  string phone     = 3;
+  string role      = 4;
+  string status    = 5;
+}
+
+message DeleteUserRequest {
+  string id = 1;
 }
