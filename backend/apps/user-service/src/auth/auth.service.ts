@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -199,8 +200,12 @@ export class AuthService {
   }
 
   async deleteUser(id: string) {
-    // In real app, consider soft delete instead
-    await this.userRepo.delete(id);
+    const user = await this.userRepo.findOne({
+      where: { id },
+      relations: ['profile', 'keys'],
+    });
+    if (!user) throw new NotFoundException(`User ${id} không tìm thấy`);
+    await this.userRepo.softRemove(user);
     return { message: 'Đã xóa người dùng' };
   }
 

@@ -146,7 +146,7 @@ export class InspectionService {
     if (inspection.signed_at) {
       throw new ConflictException('Inspection đã được ký — không thể xoá');
     }
-    await this.repo.remove(inspection);
+    await this.repo.softRemove(inspection);
   }
   // method findById
   async findById(id: string) {

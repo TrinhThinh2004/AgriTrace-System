@@ -265,7 +265,7 @@ export class BatchService {
   // Method delete (chỉ xóa được batch ở trạng thái SEEDING)
   async delete(id: string) {
     const batch = await this.findById(id);
-    await this.batchRepo.remove(batch);
+    await this.batchRepo.softRemove(batch);
   }
   // Method findById (dùng chung cho update, delete, transition)
   async findById(id: string) {

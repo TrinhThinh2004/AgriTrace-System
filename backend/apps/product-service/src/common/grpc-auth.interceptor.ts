@@ -21,7 +21,6 @@ export class GrpcAuthInterceptor implements NestInterceptor {
     if (context.getType() !== 'rpc') return next.handle();
 
     const rpcCtx = context.switchToRpc();
-    // gRPC: arg thứ 2 là Metadata
     const metadata = rpcCtx.getContext<Metadata>();
 
     const userId = (metadata?.get?.('x-user-id')?.[0] as string) || null;

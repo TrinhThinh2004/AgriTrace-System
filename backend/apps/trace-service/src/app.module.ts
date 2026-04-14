@@ -10,7 +10,7 @@ import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // ── Database riêng cho trace-service ──────────────────────
+    // Cấu hình kết nối database với TypeORM của trace-service 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -22,7 +22,7 @@ import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
         password: config.get<string>('TRACE_DB_PASS'),
         database: config.get<string>('TRACE_DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // → dùng migration trong production
+        synchronize: true, 
         logging: ['error'],
       }),
     }),

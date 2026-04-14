@@ -20,8 +20,7 @@ import { OwnershipGuard } from './guards/ownership.guard';
           transport: Transport.GRPC,
           options: {
             url:
-              config.get<string>('PRODUCT_SERVICE_GRPC_URL') ||
-              'localhost:50052',
+              config.get<string>('PRODUCT_SERVICE_GRPC_URL'),
             package: 'product',
             protoPath: join(process.cwd(), 'libs/shared/proto/product.proto'),
             loader: { keepCase: true },
@@ -36,10 +35,24 @@ import { OwnershipGuard } from './guards/ownership.guard';
           transport: Transport.GRPC,
           options: {
             url:
-              config.get<string>('TRACE_SERVICE_GRPC_URL') ||
-              'localhost:50053',
+              config.get<string>('TRACE_SERVICE_GRPC_URL'),
             package: 'trace',
             protoPath: join(process.cwd(), 'libs/shared/proto/trace.proto'),
+            loader: { keepCase: true },
+          },
+        }),
+      },
+      {
+        name: 'USER_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.GRPC,
+          options: {
+            url:
+              config.get<string>('USER_SERVICE_GRPC_URL'),
+            package: 'user',
+            protoPath: join(process.cwd(), 'libs/shared/proto/user.proto'),
             loader: { keepCase: true },
           },
         }),

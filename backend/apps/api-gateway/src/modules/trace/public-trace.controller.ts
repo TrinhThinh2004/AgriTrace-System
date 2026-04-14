@@ -23,8 +23,8 @@ interface TraceServiceGrpc {
 
 @Controller('public/trace')
 export class PublicTraceController implements OnModuleInit {
-  private product: ProductServiceGrpc;
-  private trace: TraceServiceGrpc;
+  private product!: ProductServiceGrpc;
+  private trace!: TraceServiceGrpc;
 
   constructor(
     @Inject('PRODUCT_SERVICE') private readonly productClient: ClientGrpc,

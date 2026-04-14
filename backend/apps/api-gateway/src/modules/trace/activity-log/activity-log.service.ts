@@ -30,8 +30,8 @@ type AuthUser = { id: string; role: string };
 
 @Injectable()
 export class ActivityLogService implements OnModuleInit {
-  private trace: TraceServiceGrpc;
-  private product: ProductServiceGrpc;
+  private trace!: TraceServiceGrpc;
+  private product!: ProductServiceGrpc;
 
   constructor(
     @Inject('TRACE_SERVICE') private readonly traceClient: ClientGrpc,
@@ -57,7 +57,7 @@ export class ActivityLogService implements OnModuleInit {
       throw new ForbiddenException('Không có quyền trên activity log này');
     }
   }
-
+  // Chỉ người sở hữu batch chứa log (hoặc ADMIN) mới được sửa/xoá/ký
   create(batchId: string, dto: Record<string, any>, user: AuthUser) {
     return firstValueFrom(
       this.trace.createActivityLog(
@@ -70,7 +70,7 @@ export class ActivityLogService implements OnModuleInit {
       ),
     );
   }
-
+  // update/delete/sign đều cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async update(id: string, dto: Record<string, any>, user: AuthUser) {
     const current = await firstValueFrom(
       this.trace.getActivityLogById({ id }, withAuthMetadata(user)),
@@ -80,7 +80,7 @@ export class ActivityLogService implements OnModuleInit {
       this.trace.updateActivityLog({ id, ...dto }, withAuthMetadata(user)),
     );
   }
-
+  // delete cũng cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async delete(id: string, user: AuthUser) {
     const current = await firstValueFrom(
       this.trace.getActivityLogById({ id }, withAuthMetadata(user)),
@@ -90,7 +90,7 @@ export class ActivityLogService implements OnModuleInit {
       this.trace.deleteActivityLog({ id }, withAuthMetadata(user)),
     );
   }
-
+  // ký cũng cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async sign(
     id: string,
     dto: { digital_signature: string; signed_at: string },
@@ -104,23 +104,17 @@ export class ActivityLogService implements OnModuleInit {
       this.trace.signActivityLog({ id, ...dto }, withAuthMetadata(user)),
     );
   }
-
+  // ADMIN có thể xem tất cả log; còn lại phải sở hữu batch chứa log mới xem được
   findById(id: string, user?: AuthUser) {
-    return firstValueFrom(
-      this.trace.getActivityLogById(
-        { id },
-        user ? withAuthMetadata(user) : undefined,
-      ),
-    );
+    const args: [any, ...any[]] = [{ id }];
+    if (user) args.push(withAuthMetadata(user));
+    return firstValueFrom(this.trace.getActivityLogById(...args));
   }
-
+  // ADMIN có thể xem tất cả log; còn lại phải sở hữu batch chứa log mới xem được
   listByBatch(batchId: string, user?: AuthUser) {
-    return firstValueFrom(
-      this.trace.getActivityLogsByBatch(
-        { batch_id: batchId },
-        user ? withAuthMetadata(user) : undefined,
-      ),
-    );
+    const args: [any, ...any[]] = [{ batch_id: batchId }];
+    if (user) args.push(withAuthMetadata(user));
+    return firstValueFrom(this.trace.getActivityLogsByBatch(...args));
   }
 
   list(

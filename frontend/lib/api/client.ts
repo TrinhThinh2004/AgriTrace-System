@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/stores/auth-store";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ;
+// console.log(`API base URL: ${BASE_URL}`);
 export class ApiError extends Error {
   status: number;
   code?: string;

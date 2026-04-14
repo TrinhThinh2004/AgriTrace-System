@@ -82,7 +82,7 @@ export class BatchController {
   ) {
     // Lấy batch_code từ batch (endpoint public)
     const batch = await this.service.findByIdPublic(id);
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const traceUrl = `${frontendUrl}/trace/${batch.batch_code}`;
 
     const qrBuffer = await QRCode.toBuffer(traceUrl, {

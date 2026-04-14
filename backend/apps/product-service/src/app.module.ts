@@ -12,7 +12,7 @@ import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // Cấu hình kết nối database PostgreSQL với TypeORM
+    // Cấu hình kết nối database PostgreSQL với TypeORM của product-service
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -24,7 +24,7 @@ import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
         password: config.get<string>('PRODUCT_DB_PASS'),
         database: config.get<string>('PRODUCT_DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true, //  dùng migration trong production
+        synchronize: true, 
         logging: ['error'],
       }),
     }),

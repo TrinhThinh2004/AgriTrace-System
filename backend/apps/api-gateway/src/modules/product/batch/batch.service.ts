@@ -15,7 +15,7 @@ interface ProductServiceGrpc {
 
 @Injectable()
 export class BatchService implements OnModuleInit {
-  private grpc: ProductServiceGrpc;
+  private grpc!: ProductServiceGrpc;
 
   constructor(
     @Inject('PRODUCT_SERVICE') private readonly client: ClientGrpc,

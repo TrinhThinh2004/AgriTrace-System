@@ -52,7 +52,7 @@ export class ActivityLogService {
     @InjectRepository(ActivityLog)
     private readonly repo: Repository<ActivityLog>,
   ) {}
-
+  // method create sẽ tạo một activity log mới
   async create(input: CreateActivityLogDto, caller: CallerCtx) {
     if (!caller?.userId) throw new ForbiddenException('Thiếu thông tin caller');
 
@@ -115,7 +115,7 @@ export class ActivityLogService {
         'ActivityLog đã được ký — không thể xoá',
       );
     }
-    await this.repo.remove(log);
+    await this.repo.softRemove(log);
   }
   // method findById
   async findById(id: string) {

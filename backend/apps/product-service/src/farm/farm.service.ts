@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
@@ -129,16 +128,7 @@ export class FarmService {
   // Method delete 
   async delete(id: string) {
     const farm = await this.findById(id);
-    try {
-      await this.repo.remove(farm);
-    } catch (err: any) {
-      if (err?.code === '23503') {
-        throw new ConflictException(
-          'Không thể xoá farm đang chứa batch. Hãy xoá hoặc chuyển batch trước, hoặc đổi status sang INACTIVE.',
-        );
-      }
-      throw err;
-    }
+    await this.repo.softRemove(farm);
   }
   // Method findById
   async findById(id: string) {

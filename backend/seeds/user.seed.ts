@@ -44,7 +44,7 @@ export async function seedUsers() {
     },
     {
       id: FARMER_1_ID,
-      email: 'fammer1@gmail.com',
+      email: 'farmer1@gmail.com',
       password_hash: passwordHash,
       full_name: 'Tran Thi Lan',
       phone: '0901000002',
@@ -53,7 +53,7 @@ export async function seedUsers() {
     },
     {
       id: FARMER_2_ID,
-      email: 'fammer2@gmail.com',
+      email: 'farmer2@gmail.com',
       password_hash: passwordHash,
       full_name: 'Le Van Hai',
       phone: '0901000003',
@@ -62,7 +62,7 @@ export async function seedUsers() {
     },
     {
       id: FARMER_3_ID,
-      email: 'fammer3@gmail.com',
+      email: 'farmer3@gmail.com',
       password_hash: passwordHash,
       full_name: 'Pham Minh Duc',
       phone: '0901000004',

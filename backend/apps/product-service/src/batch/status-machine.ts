@@ -5,6 +5,8 @@ import { BatchStatus } from '@app/shared';
  * Tuần tự nghiêm: chỉ cho phép tiến tới state kế tiếp, không skip không lùi.
  *
  *   SEEDING → GROWING → HARVESTED → INSPECTED → PACKED → SHIPPED
+ *   Gieo hạt → Trồng trọt → Thu hoạch → Kiểm tra → Đóng gói → Vận chuyển
+ *   
  */
 const NEXT: Record<BatchStatus, BatchStatus[]> = {
   [BatchStatus.SEEDING]: [BatchStatus.GROWING],

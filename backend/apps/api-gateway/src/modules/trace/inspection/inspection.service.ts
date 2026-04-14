@@ -59,21 +59,21 @@ export class InspectionService implements OnModuleInit {
       ),
     );
   }
-
+  // update/delete/sign đều cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async update(id: string, dto: Record<string, any>, user: AuthUser) {
     await this.assertOwnsInspection(user, id);
     return firstValueFrom(
       this.trace.updateInspection({ id, ...dto }, withAuthMetadata(user)),
     );
   }
-
+  // delete cũng cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async delete(id: string, user: AuthUser) {
     await this.assertOwnsInspection(user, id);
     return firstValueFrom(
       this.trace.deleteInspection({ id }, withAuthMetadata(user)),
     );
   }
-
+  // ký cũng cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async sign(
     id: string,
     dto: { digital_signature: string; signed_at: string },
@@ -84,23 +84,17 @@ export class InspectionService implements OnModuleInit {
       this.trace.signInspection({ id, ...dto }, withAuthMetadata(user)),
     );
   }
-
+  // ADMIN có thể xem tất cả log; còn lại phải sở hữu batch chứa log mới xem được
   findById(id: string, user?: AuthUser) {
-    return firstValueFrom(
-      this.trace.getInspectionById(
-        { id },
-        user ? withAuthMetadata(user) : undefined,
-      ),
-    );
+    const args: [any, ...any[]] = [{ id }];
+    if (user) args.push(withAuthMetadata(user));
+    return firstValueFrom(this.trace.getInspectionById(...args));
   }
-
+  
   listByBatch(batchId: string, user?: AuthUser) {
-    return firstValueFrom(
-      this.trace.getInspectionsByBatch(
-        { batch_id: batchId },
-        user ? withAuthMetadata(user) : undefined,
-      ),
-    );
+    const args: [any, ...any[]] = [{ batch_id: batchId }];
+    if (user) args.push(withAuthMetadata(user));
+    return firstValueFrom(this.trace.getInspectionsByBatch(...args));
   }
 
   list(

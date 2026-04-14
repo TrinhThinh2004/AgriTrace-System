@@ -1,16 +1,8 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Body,
-  Query,
-} from '@nestjs/common';
-import { UserService } from './user.service';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
 import { Roles } from '../../common/decorators';
 import { Role } from '../../common/enums';
+
+import { UserService } from './user.service';
 
 @Controller('users')
 export class UserController {
@@ -18,12 +10,8 @@ export class UserController {
 
   @Roles(Role.ADMIN)
   @Get()
-  list(
-    @Query('role') role?: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
-    return this.userService.list({ role, page: Number(page) || 1, limit: Number(limit) || 50 });
+  list(@Query('role') role?: string, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.userService.list(role, Number(page) || 1, Number(limit) || 50);
   }
 
   @Roles(Role.ADMIN)

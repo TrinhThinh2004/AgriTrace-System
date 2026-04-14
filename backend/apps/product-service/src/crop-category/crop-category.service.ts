@@ -65,17 +65,7 @@ export class CropCategoryService {
   // Method delete 
   async delete(id: string) {
     const cc = await this.findById(id);
-    try {
-      await this.repo.remove(cc);
-    } catch (err: any) {
-      // Nếu xóa thất bại do ràng buộc khóa ngoại
-      if (err?.code === '23503') {
-        throw new ConflictException(
-          'Không thể xoá danh mục đang được sử dụng bởi batch. Đổi status sang INACTIVE thay vì xoá.',
-        );
-      }
-      throw err;
-    }
+    await this.repo.softRemove(cc);
   }
   // Method findById
   async findById(id: string) {

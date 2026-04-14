@@ -1,6 +1,6 @@
 import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { Observable, firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 interface UserServiceGrpc {
   listUsers(data: { role?: string; page?: number; limit?: number }): Observable<any>;
@@ -11,37 +11,29 @@ interface UserServiceGrpc {
 
 @Injectable()
 export class UserService implements OnModuleInit {
-  private grpc: UserServiceGrpc;
+  private userService!: UserServiceGrpc;
 
-  constructor(
-    @Inject('USER_SERVICE') private readonly client: ClientGrpc,
-  ) {}
+  constructor(@Inject('USER_SERVICE') private readonly client: ClientGrpc) {}
 
   onModuleInit() {
-    this.grpc = this.client.getService<UserServiceGrpc>('UserService');
+    this.userService = this.client.getService<UserServiceGrpc>('UserService');
   }
 
-  list(query: { role?: string; page?: number; limit?: number }) {
+  list(role?: string, page = 1, limit = 50) {
     return firstValueFrom(
-      this.grpc.listUsers(query),
+      this.userService.listUsers({ role, page: Number(page) || 1, limit: Number(limit) || 50 }),
     );
   }
 
-  create(dto: Record<string, any>) {
-    return firstValueFrom(
-      this.grpc.createUser(dto),
-    );
+  create(dto: any) {
+    return firstValueFrom(this.userService.createUser(dto));
   }
 
-  update(id: string, dto: Record<string, any>) {
-    return firstValueFrom(
-      this.grpc.updateUser({ ...dto, id }),
-    );
+  update(id: string, dto: any) {
+    return firstValueFrom(this.userService.updateUser({ ...dto, id }));
   }
 
   delete(id: string) {
-    return firstValueFrom(
-      this.grpc.deleteUser({ id }),
-    );
+    return firstValueFrom(this.userService.deleteUser({ id }));
   }
 }

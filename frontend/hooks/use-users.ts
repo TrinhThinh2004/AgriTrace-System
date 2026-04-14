@@ -1,3 +1,4 @@
+"use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userApi, type UserListParams, type CreateUserBody, type UpdateUserBody } from "@/lib/api/user";
 
