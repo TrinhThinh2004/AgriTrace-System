@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Tractor, Leaf, Shield, QrCode, CheckCircle } from "lucide-react";
+import { Tractor, Leaf, Shield, QrCode, CheckCircle,Sprout } from "lucide-react";
 import { toast } from "sonner";
 
 const benefits = [
@@ -94,7 +94,7 @@ export default function Login() {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2">
               <div className="h-11 w-11 rounded-lg bg-primary flex items-center justify-center">
-                <Tractor className="h-6 w-6 text-primary-foreground" />
+                <Sprout className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="text-3xl font-bold">AgriTrace</span>
             </div>

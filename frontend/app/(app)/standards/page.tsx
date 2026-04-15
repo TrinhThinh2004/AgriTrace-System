@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil } from "lucide-react";
 import { mockStandards } from "@/lib/mockData";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function Standards() {
-  const { toast } = useToast();
 
   return (
     <div className="space-y-6">
@@ -17,7 +16,7 @@ export default function Standards() {
           <h1 className="text-2xl font-bold">Quản lý tiêu chuẩn</h1>
           <p className="text-sm text-muted-foreground">Quản lý tiêu chuẩn chứng nhận nông nghiệp</p>
         </div>
-        <Button onClick={() => toast({ title: "Thêm tiêu chuẩn", description: "Mở biểu mẫu thêm tiêu chuẩn" })}>
+        <Button onClick={() => toast.info("Thêm tiêu chuẩn", { description: "Mở biểu mẫu thêm tiêu chuẩn" })}>
           <Plus className="h-4 w-4 mr-1" /> Thêm tiêu chuẩn
         </Button>
       </div>

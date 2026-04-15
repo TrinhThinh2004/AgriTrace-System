@@ -1,14 +1,13 @@
 "use client";
 import { BatchCard } from "@/components/BatchCard";
 import { StatsCard } from "@/components/StatsCard";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, CheckCircle, Clock, Plus, Search, Loader2 } from "lucide-react";
+import { Package, CheckCircle, Clock, Search, Loader2 } from "lucide-react";
 import { useBatches } from "@/hooks/use-batches";
 import { useFarms } from "@/hooks/use-farms";
+import { CreateBatchDialog } from "@/components/CreateBatchDialog";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 const statusOptions: { value: string; label: string }[] = [
   { value: "all", label: "Tất cả trạng thái" },
@@ -19,11 +18,10 @@ const statusOptions: { value: string; label: string }[] = [
   { value: "PACKED", label: "Đã đóng gói" },
   { value: "SHIPPED", label: "Đã xuất kho" },
 ];
-
+  
 export default function FarmerDashboard() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const router = useRouter();
 
   const { data: batchData, isLoading } = useBatches();
   const { data: farmData } = useFarms();
@@ -49,9 +47,7 @@ export default function FarmerDashboard() {
           <h1 className="text-2xl font-bold">Trang nông dân</h1>
           <p className="text-sm text-muted-foreground">Quản lý các lô sản xuất</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-1" /> Tạo lô mới
-        </Button>
+        <CreateBatchDialog />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

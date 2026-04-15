@@ -23,13 +23,13 @@ export class BatchController {
     private readonly service: BatchService,
     private readonly configService: ConfigService,
   ) {}
-
+  // Endpoint để tạo batch mới, chỉ farmer được phép tạo batch cho farm của họ
   @FarmerOnly()
   @Post()
   create(@Body() dto: CreateBatchDto, @CurrentUser() user: any) {
     return this.service.create(dto, user);
   }
-
+  // Endpoint để lấy danh sách batches, farmer chỉ thấy batches của farm mình, admin/inspector thấy tất cả
   @Roles(Role.ADMIN, Role.FARMER, Role.INSPECTOR)
   @Get()
   list(
@@ -41,13 +41,13 @@ export class BatchController {
   ) {
     return this.service.list({ farm_id, status, page, limit }, user);
   }
-
+  // Endpoint để lấy thông tin chi tiết của batch, chỉ owner (farmer) hoặc admin/inspector mới được xem
   @OwnsBatch('id')
   @Get(':id')
   findById(@Param('id') id: string, @CurrentUser() user: any) {
     return this.service.findById(id, user);
   }
-
+  // Endpoint để cập nhật thông tin batch, chỉ owner (farmer) mới được phép chỉnh sửa
   @OwnsBatch('id')
   @Patch(':id')
   update(
@@ -57,7 +57,8 @@ export class BatchController {
   ) {
     return this.service.update(id, dto, user);
   }
-
+  // Endpoint để chuyển trạng thái batch, chỉ owner (farmer) mới được phép chuyển trạng thái
+  @Roles(Role.ADMIN, Role.FARMER)
   @OwnsBatch('id')
   @Post(':id/transition')
   transitionStatus(
@@ -67,7 +68,7 @@ export class BatchController {
   ) {
     return this.service.transitionStatus(id, dto, user);
   }
-
+  // Endpoint để xóa batch, chỉ owner (farmer) mới được phép xóa batch của mình
   @OwnsBatch('id')
   @Delete(':id')
   delete(@Param('id') id: string, @CurrentUser() user: any) {

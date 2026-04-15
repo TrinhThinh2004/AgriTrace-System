@@ -49,7 +49,7 @@ export function AppSidebar() {
       <div className="h-14 flex items-center px-4 border-b border-sidebar-border/50">
         <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Tractor className="h-4 w-4 text-sidebar-primary-foreground" />
+            <Sprout className="h-4 w-4 text-sidebar-primary-foreground" />
           </div>
           {!collapsed && (
             <span className="text-lg font-bold text-sidebar-foreground truncate">AgriTrace</span>

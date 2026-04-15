@@ -3,12 +3,13 @@ import {
   Inject,
   OnModuleInit,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { Observable, firstValueFrom } from 'rxjs';
 import { withAuthMetadata } from '../../../common/grpc/with-auth-metadata';
 import { Role } from '../../../common/enums';
-
+import { BatchService } from '../../product/batch/batch.service';
 interface TraceServiceGrpc {
   createInspection(data: any, metadata?: any): Observable<any>;
   updateInspection(data: any, metadata?: any): Observable<any>;
@@ -27,6 +28,7 @@ export class InspectionService implements OnModuleInit {
 
   constructor(
     @Inject('TRACE_SERVICE') private readonly traceClient: ClientGrpc,
+    private readonly batchService: BatchService,
   ) {}
 
   onModuleInit() {
@@ -48,6 +50,26 @@ export class InspectionService implements OnModuleInit {
   }
 
   create(batchId: string, dto: Record<string, any>, user: AuthUser) {
+    // If caller is INSPECTOR, ensure batch is in HARVESTED state before allowing inspection
+    if (user.role === Role.INSPECTOR) {
+      return (async () => {
+        const batch = await this.batchService.findById(batchId, { id: user.id, role: user.role });
+        if (batch.status !== 'HARVESTED') {
+          throw new BadRequestException('Chỉ được tạo kiểm định khi lô đã được thu hoạch');
+        }
+        return firstValueFrom(
+          this.trace.createInspection(
+            {
+              ...dto,
+              batch_id: batchId,
+              inspector_id: user.id,
+            },
+            withAuthMetadata(user),
+          ),
+        );
+      })();
+    }
+
     return firstValueFrom(
       this.trace.createInspection(
         {

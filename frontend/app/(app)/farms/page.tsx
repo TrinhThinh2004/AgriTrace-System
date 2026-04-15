@@ -3,10 +3,28 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
-import { useFarms } from "@/hooks/use-farms";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Pencil, Trash2, Loader2 } from "lucide-react";
+import { useFarms, useUpdateFarm, useDeleteFarm } from "@/hooks/use-farms";
 import { useState } from "react";
+import { toast } from "sonner";
+import type { Farm } from "@/lib/api/product";
+
+import { CreateFarmDialog } from "@/components/CreateFarmDialog";
 
 const certLabel: Record<string, string> = {
   NONE: "Chưa có",
@@ -18,7 +36,20 @@ const certLabel: Record<string, string> = {
 
 export default function FarmsManagement() {
   const [search, setSearch] = useState("");
+  const [editFarm, setEditFarm] = useState<Farm | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    address: "",
+    location_lat: "",
+    location_long: "",
+    area_hectares: "",
+    certification_status: "NONE",
+    status: "ACTIVE",
+  });
+
   const { data, isLoading } = useFarms();
+  const updateFarm = useUpdateFarm();
+  const deleteFarm = useDeleteFarm();
 
   const farms = data?.items ?? [];
   const filtered = farms.filter(
@@ -27,6 +58,51 @@ export default function FarmsManagement() {
       (f.address ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
+  const openEdit = (farm: Farm) => {
+    setEditFarm(farm);
+    setEditForm({
+      name: farm.name,
+      address: farm.address ?? "",
+      location_lat: farm.location_lat ?? "",
+      location_long: farm.location_long ?? "",
+      area_hectares: farm.area_hectares ?? "",
+      certification_status: farm.certification_status ?? "NONE",
+      status: farm.status ?? "ACTIVE",
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editFarm) return;
+    try {
+      await updateFarm.mutateAsync({
+        id: editFarm.id,
+        body: {
+          name: editForm.name || undefined,
+          address: editForm.address || undefined,
+          location_lat: editForm.location_lat || undefined,
+          location_long: editForm.location_long || undefined,
+          area_hectares: editForm.area_hectares || undefined,
+          certification_status: editForm.certification_status || undefined,
+          status: editForm.status || undefined,
+        },
+      });
+      toast.success("Cập nhật trang trại thành công");
+      setEditFarm(null);
+    } catch (e: any) {
+      toast.error("Lỗi", { description: e.message });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc muốn xóa trang trại này?")) return;
+    try {
+      await deleteFarm.mutateAsync(id);
+      toast.success("Đã xóa trang trại");
+    } catch (e: any) {
+      toast.error("Lỗi", { description: e.message });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -34,9 +110,7 @@ export default function FarmsManagement() {
           <h1 className="text-2xl font-bold">Quản lý trang trại</h1>
           <p className="text-sm text-muted-foreground">Quản lý các trang trại đã đăng ký</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-1" /> Thêm trang trại
-        </Button>
+        <CreateFarmDialog />
       </div>
 
       <div className="relative max-w-xs">
@@ -80,8 +154,12 @@ export default function FarmsManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><Pencil className="h-3 w-3" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(f)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(f.id)} disabled={deleteFarm.isPending}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -98,6 +176,91 @@ export default function FarmsManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Farm Dialog */}
+      <Dialog open={!!editFarm} onOpenChange={(open) => { if (!open) setEditFarm(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa trang trại</DialogTitle>
+          </DialogHeader>
+          {editFarm && (
+            <div className="space-y-4">
+              <div>
+                <Label>Tên trang trại</Label>
+                <Input
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Địa chỉ</Label>
+                <Input
+                  value={editForm.address}
+                  onChange={(e) => setEditForm((p) => ({ ...p, address: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Vĩ độ (Lat)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={editForm.location_lat}
+                    onChange={(e) => setEditForm((p) => ({ ...p, location_lat: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Kinh độ (Long)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={editForm.location_long}
+                    onChange={(e) => setEditForm((p) => ({ ...p, location_long: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Diện tích (Hecta)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={editForm.area_hectares}
+                    onChange={(e) => setEditForm((p) => ({ ...p, area_hectares: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Chứng nhận</Label>
+                  <Select value={editForm.certification_status} onValueChange={(v) => setEditForm((p) => ({ ...p, certification_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NONE">Chưa có</SelectItem>
+                      <SelectItem value="PENDING">Đang chờ</SelectItem>
+                      <SelectItem value="VIETGAP">VietGAP</SelectItem>
+                      <SelectItem value="GLOBALGAP">GlobalGAP</SelectItem>
+                      <SelectItem value="ORGANIC">Hữu cơ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Trạng thái</Label>
+                <Select value={editForm.status} onValueChange={(v) => setEditForm((p) => ({ ...p, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                    <SelectItem value="INACTIVE">Ngưng</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button className="w-full" onClick={handleUpdate} disabled={updateFarm.isPending}>
+                {updateFarm.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+                Lưu thay đổi
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

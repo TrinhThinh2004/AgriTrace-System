@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package, Building2, ClipboardCheck, QrCode, Plus, MapPin, Loader2 } from "lucide-react";
+import { Package, Building2, ClipboardCheck, QrCode, Plus, MapPin, Loader2,Sprout } from "lucide-react";
 import { useBatches } from "@/hooks/use-batches";
 import { useFarms } from "@/hooks/use-farms";
 import { useRouter } from "next/navigation";

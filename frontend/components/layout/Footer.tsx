@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Tractor, Mail } from "lucide-react";
+import { Tractor, Mail,Sprout } from "lucide-react";
 import { FaFacebook, FaTwitter, FaGithub } from "react-icons/fa";
 const productLinks = [
   { href: "/#features", label: "Tính năng" },
@@ -30,7 +30,7 @@ export function PublicFooter() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
               <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-                <Tractor className="h-5 w-5 text-primary-foreground" />
+                <Sprout className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">AgriTrace</span>
             </Link>

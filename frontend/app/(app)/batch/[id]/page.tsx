@@ -1,7 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useBatch, useUpdateBatch, useTransitionBatch } from "@/hooks/use-batches";
+import { useBatch, useTransitionBatch } from "@/hooks/use-batches";
 import { useFarms } from "@/hooks/use-farms";
 import { useCropCategories } from "@/hooks/use-crop-categories";
 import {
@@ -58,7 +58,7 @@ import {
   Eye,
   Award,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const steps = [
   { title: "Gieo trồng", description: "Giống cây, ngày trồng", icon: Sprout },
@@ -71,6 +71,15 @@ const steps = [
 
 const STATUS_ORDER: Record<string, number> = {
   SEEDING: 1, GROWING: 2, HARVESTED: 3, INSPECTED: 4, PACKED: 5, SHIPPED: 6,
+};
+
+const NEXT_STATUS: Record<string, { value: string; label: string } | null> = {
+  SEEDING: { value: "GROWING", label: "Đang phát triển" },
+  GROWING: { value: "HARVESTED", label: "Đã thu hoạch" },
+  HARVESTED: { value: "INSPECTED", label: "Đã kiểm định" },
+  INSPECTED: { value: "PACKED", label: "Đã đóng gói" },
+  PACKED: { value: "SHIPPED", label: "Đã xuất kho" },
+  SHIPPED: null,
 };
 
 const ACTIVITY_TYPES = [
@@ -123,7 +132,6 @@ export default function BatchDetail() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const router = useRouter();
-  const { toast } = useToast();
   const user = useAuthStore((s) => s.user);
   const isFarmer = user?.role === "FARMER";
   const isInspector = user?.role === "INSPECTOR";
@@ -134,8 +142,29 @@ export default function BatchDetail() {
   const { data: cropData } = useCropCategories();
   const { data: logsData, isLoading: logsLoading } = useActivityLogsByBatch(id);
   const { data: insData, isLoading: insLoading } = useInspectionsByBatch(id);
-  const updateBatch = useUpdateBatch();
   const transitionBatch = useTransitionBatch();
+
+  const nextStatus = batch ? NEXT_STATUS[batch.status] : null;
+
+  const handleTransition = async () => {
+    if (!nextStatus || !id) return;
+    try {
+      const body: any = { next_status: nextStatus.value as any };
+      // If inspector is performing INSPECTED transition, ask for inspection result
+      if (isInspector && nextStatus.value === 'INSPECTED') {
+        const res = window.prompt('Nhập kết quả kiểm định (PASS, FAIL, CONDITIONAL_PASS):', 'PASS');
+        if (!res) return;
+        body.inspection_result = res;
+      }
+      await transitionBatch.mutateAsync({
+        id,
+        body,
+      });
+      toast.success(`Chuyển trạng thái thành công → ${nextStatus.label}`);
+    } catch (e: any) {
+      toast.error("Lỗi chuyển trạng thái", { description: e.message });
+    }
+  };
 
   // Activity Log mutations
   const createLog = useCreateActivityLog();
@@ -204,7 +233,7 @@ export default function BatchDetail() {
               : undefined,
         },
       });
-      toast({ title: "Tạo nhật ký thành công" });
+      toast.success("Tạo nhật ký thành công");
       setLogDialogOpen(false);
       setLogForm({
         activity_type: "FERTILIZING",
@@ -216,7 +245,7 @@ export default function BatchDetail() {
         input_unit: "",
       });
     } catch (e: any) {
-      toast({ title: "Lỗi", description: e.message, variant: "destructive" });
+      toast.error("Lỗi", { description: e.message });
     }
   };
 
@@ -229,18 +258,18 @@ export default function BatchDetail() {
           signed_at: new Date().toISOString(),
         },
       });
-      toast({ title: "Đã ký nhật ký thành công" });
+      toast.success("Đã ký nhật ký thành công");
     } catch (e: any) {
-      toast({ title: "Lỗi ký", description: e.message, variant: "destructive" });
+      toast.error("Lỗi ký", { description: e.message });
     }
   };
 
   const handleDeleteLog = async (logId: string) => {
     try {
       await deleteLog.mutateAsync(logId);
-      toast({ title: "Đã xóa nhật ký" });
+      toast.success("Đã xóa nhật ký");
     } catch (e: any) {
-      toast({ title: "Lỗi", description: e.message, variant: "destructive" });
+      toast.error("Lỗi", { description: e.message });
     }
   };
 
@@ -258,7 +287,7 @@ export default function BatchDetail() {
           report_url: insForm.report_url || undefined,
         },
       });
-      toast({ title: "Tạo kiểm định thành công" });
+      toast.success("Tạo kiểm định thành công");
       setInsDialogOpen(false);
       setInsForm({
         inspection_type: "FIELD_VISIT",
@@ -269,7 +298,7 @@ export default function BatchDetail() {
         report_url: "",
       });
     } catch (e: any) {
-      toast({ title: "Lỗi", description: e.message, variant: "destructive" });
+      toast.error("Lỗi", { description: e.message });
     }
   };
 
@@ -282,18 +311,18 @@ export default function BatchDetail() {
           signed_at: new Date().toISOString(),
         },
       });
-      toast({ title: "Đã ký kiểm định thành công" });
+      toast.success("Đã ký kiểm định thành công");
     } catch (e: any) {
-      toast({ title: "Lỗi ký", description: e.message, variant: "destructive" });
+      toast.error("Lỗi ký", { description: e.message });
     }
   };
 
   const handleDeleteInspection = async (insId: string) => {
     try {
       await deleteInspection.mutateAsync(insId);
-      toast({ title: "Đã xóa kiểm định" });
+      toast.success("Đã xóa kiểm định");
     } catch (e: any) {
-      toast({ title: "Lỗi", description: e.message, variant: "destructive" });
+      toast.error("Lỗi", { description: e.message });
     }
   };
 
@@ -360,6 +389,34 @@ export default function BatchDetail() {
                       <p className="text-sm text-muted-foreground mt-1">{batch.notes}</p>
                     </div>
                   )}
+                  {nextStatus && (() => {
+                    const canTransition = (() => {
+                      if (!nextStatus) return false;
+                      if (isAdmin) return true;
+                      if (isFarmer) {
+                        return (
+                          (batch.status === 'SEEDING' && nextStatus.value === 'GROWING') ||
+                          (batch.status === 'GROWING' && nextStatus.value === 'HARVESTED')
+                        );
+                      }
+                      if (isInspector) {
+                        return batch.status === 'HARVESTED' && nextStatus.value === 'INSPECTED';
+                      }
+                      return false;
+                    })();
+                    return canTransition && (isFarmer || isInspector || isAdmin) ? (
+                      <div className="pt-2 border-t">
+                        <Button
+                          className="w-full"
+                          onClick={handleTransition}
+                          disabled={transitionBatch.isPending}
+                        >
+                          {transitionBatch.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                          Chuyển sang: {nextStatus.label}
+                        </Button>
+                      </div>
+                    ) : null;
+                  })()}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -482,7 +539,7 @@ export default function BatchDetail() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-base">Kiểm định ({inspections.length})</CardTitle>
-                  {(isInspector || isAdmin) && (
+                  {((isInspector && batch.status === 'HARVESTED') || isAdmin) && (
                     <Dialog open={insDialogOpen} onOpenChange={setInsDialogOpen}>
                       <DialogTrigger asChild>
                         <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Tạo kiểm định</Button>

@@ -52,6 +52,7 @@ interface ListParams {
   status?: string;
   page?: number;
   limit?: number;
+  owner_id?: string;
 }
 
 function parseDate(v?: string): Date | null {
@@ -205,8 +206,43 @@ export class BatchService {
     return this.batchRepo.save(batch);
   }
   // Method để chuyển đổi trạng thái của batch
-  async transitionStatus(id: string, input: TransitionInput) {
+  async transitionStatus(id: string, input: TransitionInput, caller: CallerCtx) {
     const batch = await this.findById(id);
+
+    // Require caller info
+    if (!caller || !caller.role) {
+      throw new ForbiddenException('Thiếu thông tin caller');
+    }
+
+    // Role-based authorization for transitions
+    if (caller.role !== Role.ADMIN) {
+      if (caller.role === Role.FARMER) {
+        // Farmer must be owner of farm
+        if (!batch.farm || batch.farm.owner_id !== caller.userId) {
+          throw new ForbiddenException('Bạn không sở hữu lô hàng này');
+        }
+        // Farmer allowed transitions: SEEDING -> GROWING, GROWING -> HARVESTED
+        const okForFarmer =
+          (batch.status === BatchStatus.SEEDING && input.next_status === BatchStatus.GROWING) ||
+          (batch.status === BatchStatus.GROWING && input.next_status === BatchStatus.HARVESTED);
+        if (!okForFarmer) {
+          throw new ForbiddenException('Farmer không được chuyển trạng thái này');
+        }
+      } else if (caller.role === Role.INSPECTOR) {
+        // Inspector allowed only HARVESTED -> INSPECTED
+        if (!(batch.status === BatchStatus.HARVESTED && input.next_status === BatchStatus.INSPECTED)) {
+          throw new ForbiddenException('Inspector chỉ được chuyển HARVESTED → INSPECTED');
+        }
+        // Prevent marking INSPECTED if inspection result is FAIL — require PASS or CONDITIONAL_PASS
+        const inspectionResult = (input as any).inspection_result;
+        const allowedResults = ["PASS", "CONDITIONAL_PASS"];
+        if (!inspectionResult || !allowedResults.includes(String(inspectionResult))) {
+          throw new BadRequestException('Không thể chuyển sang INSPECTED khi kết quả kiểm định chưa là PASS/CONDITIONAL_PASS');
+        }
+      } else {
+        throw new ForbiddenException('Role không được phép chuyển trạng thái');
+      }
+    }
 
     const next = input.next_status as BatchStatus;
     if (!Object.values(BatchStatus).includes(next)) {
@@ -296,9 +332,12 @@ export class BatchService {
     return row > 0;
   }
 
-  // Method list với filter theo farm_id, status và pagination
-  async list({ farm_id, status, page = 1, limit = 20 }: ListParams) {
+  // Method list với filter theo farm_id, status, owner_id và pagination
+  async list({ farm_id, status, page = 1, limit = 20, owner_id }: ListParams) {
     const qb = this.batchRepo.createQueryBuilder('b');
+    if (owner_id) {
+      qb.innerJoin('b.farm', 'f').andWhere('f.owner_id = :owner_id', { owner_id });
+    }
     if (farm_id) qb.andWhere('b.farm_id = :farm_id', { farm_id });
     if (status) qb.andWhere('b.status = :status', { status });
     qb.orderBy('b.created_at', 'DESC');

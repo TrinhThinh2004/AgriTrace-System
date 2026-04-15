@@ -1,8 +1,8 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { FarmService } from './farm.service';
 import { Farm } from '../entities/farm.entity';
-import { GrpcAuthContext } from '../common/grpc-auth.interceptor';
+import { GrpcAuthContext, GrpcAuthInterceptor } from '../common/grpc-auth.interceptor';
 
 function toResponse(farm: Farm) {
   return {
@@ -23,10 +23,12 @@ function toResponse(farm: Farm) {
 interface AuthData {
   __auth?: GrpcAuthContext;
 }
+
 // Controller chỉ nhận gRPC request, không có HTTP endpoint
 @Controller()
+// @UseInterceptors(GrpcAuthInterceptor)
 export class FarmController {
-  constructor(private readonly service: FarmService) {}
+  constructor(private readonly service: FarmService) { }
 
   @GrpcMethod('ProductService', 'CreateFarm')
   async create(data: AuthData & Record<string, any>) {
@@ -60,13 +62,18 @@ export class FarmController {
   }
 
   @GrpcMethod('ProductService', 'ListFarms')
-  async list(data: {
+  async list(data: AuthData & {
     owner_id?: string;
     status?: string;
     page?: number;
     limit?: number;
   }) {
-    const result = await this.service.list(data);
+    const caller = data.__auth ?? { userId: null, role: null };
+    const owner_id =
+      caller.role === 'FARMER'
+        ? caller.userId ?? data.owner_id
+        : data.owner_id;
+    const result = await this.service.list({ ...data, owner_id });
     return {
       items: result.items.map(toResponse),
       pagination: {

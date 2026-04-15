@@ -1,5 +1,5 @@
 "use client";
-import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut, User } from "lucide-react";
+import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut, User,Sprout } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

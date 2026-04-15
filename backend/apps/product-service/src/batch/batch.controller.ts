@@ -1,8 +1,8 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { BatchService } from './batch.service';
 import { Batch } from '../entities/batch.entity';
-import { GrpcAuthContext } from '../common/grpc-auth.interceptor';
+import { GrpcAuthContext, GrpcAuthInterceptor } from '../common/grpc-auth.interceptor';
 
 function toResponse(b: Batch) {
   return {
@@ -30,10 +30,12 @@ function toResponse(b: Batch) {
 interface AuthData {
   __auth?: GrpcAuthContext;
 }
+
 // Controller chỉ nhận gRPC request, không có HTTP endpoint
 @Controller()
+@UseInterceptors(GrpcAuthInterceptor)
 export class BatchController {
-  constructor(private readonly service: BatchService) {}
+  constructor(private readonly service: BatchService) { }
 
   @GrpcMethod('ProductService', 'CreateBatch')
   async create(data: AuthData & Record<string, any>) {
@@ -55,13 +57,16 @@ export class BatchController {
   }
 
   @GrpcMethod('ProductService', 'ListBatches')
-  async list(data: {
+  async list(data: AuthData & {
     farm_id?: string;
     status?: string;
     page?: number;
     limit?: number;
   }) {
-    const result = await this.service.list(data);
+    const caller = data.__auth ?? { userId: null, role: null };
+    // Farmer chỉ thấy batches thuộc farm của mình, Admin/Inspector thấy tất cả
+    const owner_id = caller.role === 'FARMER' ? caller.userId ?? undefined : undefined;
+    const result = await this.service.list({ ...data, owner_id });
     return {
       items: result.items.map(toResponse),
       pagination: {
@@ -92,7 +97,8 @@ export class BatchController {
 
   @GrpcMethod('ProductService', 'TransitionBatchStatus')
   async transitionStatus(data: AuthData & Record<string, any>) {
-    const batch = await this.service.transitionStatus(data.id, data as any);
+    const caller = data.__auth ?? { userId: null, role: null };
+    const batch = await this.service.transitionStatus(data.id, data as any, caller);
     return toResponse(batch);
   }
 }

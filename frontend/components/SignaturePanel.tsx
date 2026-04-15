@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, ShieldCheck, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCreateInspection, useSignInspection } from "@/hooks/use-inspections";
 
@@ -17,7 +17,6 @@ interface SignaturePanelProps {
 export function SignaturePanel({ batchId }: SignaturePanelProps) {
   const [notes, setNotes] = useState("");
   const [inspectionType, setInspectionType] = useState("FIELD_VISIT");
-  const { toast } = useToast();
   const user = useAuthStore((s) => s.user);
 
   const createInspection = useCreateInspection();
@@ -27,7 +26,7 @@ export function SignaturePanel({ batchId }: SignaturePanelProps) {
 
   const handleAction = async (action: "approve" | "reject") => {
     if (!batchId) {
-      toast({ title: "Vui lòng chọn lô hàng", variant: "destructive" });
+      toast.error("Vui lòng chọn lô hàng");
       return;
     }
 
@@ -52,13 +51,13 @@ export function SignaturePanel({ batchId }: SignaturePanelProps) {
         },
       });
 
-      toast({
-        title: action === "approve" ? "Đã phê duyệt lô hàng" : "Đã từ chối lô hàng",
-        description: `Kiểm định đã được tạo và ký số`,
-      });
+      toast.success(
+        action === "approve" ? "Đã phê duyệt lô hàng" : "Đã từ chối lô hàng",
+        { description: "Kiểm định đã được tạo và ký số" },
+      );
       setNotes("");
     } catch (e: any) {
-      toast({ title: "Lỗi", description: e.message, variant: "destructive" });
+      toast.error("Lỗi", { description: e.message });
     }
   };
 
