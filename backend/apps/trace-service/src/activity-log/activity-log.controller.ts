@@ -17,6 +17,7 @@ function toResponse(l: ActivityLog) {
     inputs_used: Array.isArray(l.inputs_used) ? (l.inputs_used as any[]) : [],
     is_signed: !!l.digital_signature,
     signed_at: l.signed_at?.toISOString?.() ?? '',
+    signer_key_id: l.signer_key_id ?? '',
     created_at: l.created_at?.toISOString?.() ?? '',
   };
 }
@@ -85,10 +86,11 @@ export class ActivityLogController {
   }
 
   @GrpcMethod('TraceService', 'SignActivityLog')
-  async sign(data: { id: string; digital_signature: string; signed_at: string }) {
+  async sign(data: { id: string; digital_signature: string; signed_at: string; signer_key_id: string }) {
     const log = await this.service.sign(data.id, {
       digital_signature: data.digital_signature,
       signed_at: data.signed_at,
+      signer_key_id: data.signer_key_id,
     });
     return toResponse(log);
   }

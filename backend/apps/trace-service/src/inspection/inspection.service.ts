@@ -200,6 +200,7 @@ export class InspectionService {
     }
     inspection.digital_signature = dto.digital_signature;
     inspection.signed_at = parseDate(dto.signed_at)! as any;
+    inspection.signer_key_id = dto.signer_key_id;
     return this.repo.save(inspection);
   }
 }

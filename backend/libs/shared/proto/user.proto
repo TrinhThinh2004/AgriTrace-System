@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package user;
 
-// ── User Service ──────────────────────────────────────────────────
+// UserService
 service UserService {
   // Auth RPCs
   rpc Register      (RegisterRequest)       returns (AuthResponse);
@@ -20,6 +20,16 @@ service UserService {
 
   // Internal service-to-service RPCs
   rpc ValidateToken (ValidateTokenRequest)  returns (ValidateTokenResponse);
+
+  // Key Management RPCs (chữ ký số)
+  rpc GenerateKeyPair (GenerateKeyPairRequest) returns (GenerateKeyPairResponse);
+  rpc GetPublicKey    (GetPublicKeyRequest)    returns (PublicKeyResponse);
+  rpc ListUserKeys    (ListUserKeysRequest)    returns (ListUserKeysResponse);
+  rpc RevokeKey       (RevokeKeyRequest)       returns (MessageResponse);
+
+  // Admin Key Management RPCs
+  rpc ListAllKeys    (ListAllKeysRequest)    returns (ListAllKeysResponse);
+  rpc AdminRevokeKey (AdminRevokeKeyRequest) returns (MessageResponse);
 }
 
 // ── Auth Messages ─────────────────────────────────────────────────
@@ -126,4 +136,72 @@ message UpdateUserRequest {
 
 message DeleteUserRequest {
   string id = 1;
+}
+
+// ── Key Management Messages (chữ ký số) ──────────────────────────
+message GenerateKeyPairRequest {
+  string user_id   = 1;
+  string algorithm = 2;  // "RSA-SHA256" (default)
+}
+
+message GenerateKeyPairResponse {
+  string key_id      = 1;
+  string public_key  = 2;  // PEM format
+  string private_key = 3;  // PEM format — CHỈ TRẢ 1 LẦN
+  string algorithm   = 4;
+}
+
+message GetPublicKeyRequest {
+  string key_id = 1;
+}
+
+message PublicKeyResponse {
+  string key_id     = 1;
+  string user_id    = 2;
+  string public_key = 3;  // PEM
+  string algorithm  = 4;
+  bool   is_active  = 5;
+}
+
+message ListUserKeysRequest {
+  string user_id = 1;
+}
+
+message ListUserKeysResponse {
+  repeated PublicKeyResponse keys = 1;
+}
+
+message RevokeKeyRequest {
+  string key_id  = 1;
+  string user_id = 2;
+}
+
+// ── Admin Key Management Messages ────────────────────────────────
+message ListAllKeysRequest {
+  int32  page    = 1;
+  int32  limit   = 2;
+  string status  = 3;  // "active", "revoked", or empty for all
+  string user_id = 4;  // optional filter by user
+}
+
+message AdminKeyInfo {
+  string key_id         = 1;
+  string user_id        = 2;
+  string public_key     = 3;
+  string algorithm      = 4;
+  bool   is_active      = 5;
+  string created_at     = 6;
+  string revoked_at     = 7;
+  string user_email     = 8;
+  string user_full_name = 9;
+  string user_role      = 10;
+}
+
+message ListAllKeysResponse {
+  repeated AdminKeyInfo items = 1;
+  Pagination pagination       = 2;
+}
+
+message AdminRevokeKeyRequest {
+  string key_id = 1;
 }

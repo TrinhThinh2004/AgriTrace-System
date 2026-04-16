@@ -18,6 +18,7 @@ function toResponse(i: Inspection) {
     report_url: i.report_url ?? '',
     is_signed: !!i.digital_signature,
     signed_at: i.signed_at?.toISOString?.() ?? '',
+    signer_key_id: i.signer_key_id ?? '',
     created_at: i.created_at?.toISOString?.() ?? '',
     updated_at: i.updated_at?.toISOString?.() ?? '',
   };
@@ -85,10 +86,11 @@ export class InspectionController {
   }
 
   @GrpcMethod('TraceService', 'SignInspection')
-  async sign(data: { id: string; digital_signature: string; signed_at: string }) {
+  async sign(data: { id: string; digital_signature: string; signed_at: string; signer_key_id: string }) {
     const inspection = await this.service.sign(data.id, {
       digital_signature: data.digital_signature,
       signed_at: data.signed_at,
+      signer_key_id: data.signer_key_id,
     });
     return toResponse(inspection);
   }

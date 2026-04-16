@@ -182,8 +182,9 @@ export default function PublicTrace() {
                           <span className="font-medium text-sm">{ACTIVITY_LABELS[log.activity_type] || log.activity_type}</span>
                           <span className="text-xs text-muted-foreground">{formatDate(log.performed_at)}</span>
                           {log.is_signed && (
-                            <Badge variant="outline" className="text-green-600 border-green-300 text-xs">
-                              <CheckCircle className="h-3 w-3 mr-1" /> Đã ký
+                            <Badge variant="outline" className={log.signer_key_id ? "text-green-700 border-green-400 bg-green-50 text-xs" : "text-green-600 border-green-300 text-xs"}>
+                              {log.signer_key_id ? <ShieldCheck className="h-3 w-3 mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />}
+                              {log.signer_key_id ? "Đã xác thực" : "Đã ký"}
                             </Badge>
                           )}
                         </div>
@@ -228,8 +229,9 @@ export default function PublicTrace() {
                         {rc && <Badge className={rc.color}>{rc.label}</Badge>}
                         {ins.conducted_at && <span className="text-xs text-muted-foreground">{formatDate(ins.conducted_at)}</span>}
                         {ins.is_signed && (
-                          <Badge variant="outline" className="text-green-600 border-green-300 text-xs">
-                            <CheckCircle className="h-3 w-3 mr-1" /> Xác thực
+                          <Badge variant="outline" className={ins.signer_key_id ? "text-green-700 border-green-400 bg-green-50 text-xs" : "text-green-600 border-green-300 text-xs"}>
+                            {ins.signer_key_id ? <ShieldCheck className="h-3 w-3 mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />}
+                            {ins.signer_key_id ? "Đã xác thực RSA" : "Đã ký"}
                           </Badge>
                         )}
                       </div>

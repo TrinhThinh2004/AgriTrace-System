@@ -167,6 +167,7 @@ export class ActivityLogService {
     }
     log.digital_signature = dto.digital_signature;
     log.signed_at = parseDate(dto.signed_at)! as any;
+    log.signer_key_id = dto.signer_key_id;
     return this.repo.save(log);
   }
 }

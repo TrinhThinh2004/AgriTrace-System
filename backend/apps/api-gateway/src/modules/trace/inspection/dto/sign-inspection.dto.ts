@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString, IsUUID } from 'class-validator';
 
 export class SignInspectionDto {
   @IsString()
@@ -7,4 +7,8 @@ export class SignInspectionDto {
 
   @IsDateString({}, { message: 'signed_at phải là ngày hợp lệ (ISO 8601)' })
   signed_at!: string;
+
+  @IsUUID('4', { message: 'signer_key_id phải là UUID hợp lệ' })
+  @IsNotEmpty({ message: 'signer_key_id không được để trống' })
+  signer_key_id!: string;
 }

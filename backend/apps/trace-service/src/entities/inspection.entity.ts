@@ -56,6 +56,10 @@ export class Inspection {
   @Column({ type: 'timestamptz', nullable: true })
   signed_at!: Date;
 
+  // ID của key dùng để ký
+  @Column({ type: 'uuid', nullable: true })
+  signer_key_id!: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 

@@ -1,5 +1,5 @@
 "use client";
-import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut, User,Sprout } from "lucide-react";
+import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut, User, Sprout, KeyRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const breadcrumbMap: Record<string, string> = {
   "/crops": "Giống cây trồng",
   "/users": "Quản lý người dùng",
   "/standards": "Tiêu chuẩn",
+  "/settings": "Quản lý khóa số",
 };
 
 export function AppHeader() {
@@ -78,6 +79,13 @@ export function AppHeader() {
                   <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <a href="/settings">
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Quản lý khóa số
+                </a>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />

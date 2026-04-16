@@ -8,6 +8,7 @@ import { ClientGrpc } from '@nestjs/microservices';
 import { Observable, firstValueFrom } from 'rxjs';
 import { withAuthMetadata } from '../../../common/grpc/with-auth-metadata';
 import { Role } from '../../../common/enums';
+import { SignatureVerifyService } from '../../../common/services/signature-verify.service';
 
 interface TraceServiceGrpc {
   createActivityLog(data: any, metadata?: any): Observable<any>;
@@ -36,6 +37,7 @@ export class ActivityLogService implements OnModuleInit {
   constructor(
     @Inject('TRACE_SERVICE') private readonly traceClient: ClientGrpc,
     @Inject('PRODUCT_SERVICE') private readonly productClient: ClientGrpc,
+    private readonly signatureService: SignatureVerifyService,
   ) {}
 
   onModuleInit() {
@@ -93,13 +95,24 @@ export class ActivityLogService implements OnModuleInit {
   // ký cũng cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async sign(
     id: string,
-    dto: { digital_signature: string; signed_at: string },
+    dto: { digital_signature: string; signed_at: string; signer_key_id: string },
     user: AuthUser,
   ) {
     const current = await firstValueFrom(
       this.trace.getActivityLogById({ id }, withAuthMetadata(user)),
     );
     await this.assertOwnsBatch(user, current.batch_id);
+
+    // Verify chữ ký số bằng public key trước khi forward
+    const canonical =
+      this.signatureService.buildActivityLogCanonical(current);
+    await this.signatureService.verifySignature({
+      signer_key_id: dto.signer_key_id,
+      digital_signature: dto.digital_signature,
+      canonical_data: canonical,
+      expected_user_id: user.id,
+    });
+
     return firstValueFrom(
       this.trace.signActivityLog({ id, ...dto }, withAuthMetadata(user)),
     );

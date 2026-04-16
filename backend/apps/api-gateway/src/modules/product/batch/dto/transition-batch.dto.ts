@@ -13,7 +13,7 @@ export class TransitionBatchDto {
   @IsIn(['SEEDING', 'GROWING', 'HARVESTED', 'INSPECTED', 'PACKED', 'SHIPPED'], {
     message: 'next_status phải là: SEEDING, GROWING, HARVESTED, INSPECTED, PACKED, SHIPPED',
   })
-  next_status: string;
+  next_status!: string;
 
   @IsOptional()
   @IsDateString({}, { message: 'actual_harvest_date phải là ngày hợp lệ (ISO 8601)' })

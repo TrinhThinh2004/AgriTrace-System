@@ -20,6 +20,7 @@ export interface ActivityLog {
   inputs_used: InputUsed[];
   is_signed: boolean;
   signed_at: string;
+  signer_key_id: string;
   created_at: string;
 }
 
@@ -51,6 +52,7 @@ export interface UpdateActivityLogBody {
 export interface SignBody {
   digital_signature: string;
   signed_at: string;
+  signer_key_id: string;
 }
 
 // ── Inspection ──
@@ -67,6 +69,7 @@ export interface Inspection {
   report_url: string;
   is_signed: boolean;
   signed_at: string;
+  signer_key_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -135,6 +138,7 @@ export interface PublicTraceResponse {
     inputs_used: InputUsed[];
     is_signed: boolean;
     signed_at: string;
+    signer_key_id: string;
   }>;
   inspections: Array<{
     id: string;
@@ -147,6 +151,7 @@ export interface PublicTraceResponse {
     report_url: string;
     is_signed: boolean;
     signed_at: string;
+    signer_key_id: string;
   }>;
 }
 

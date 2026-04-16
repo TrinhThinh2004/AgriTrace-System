@@ -2,7 +2,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, Leaf, ClipboardCheck, QrCode, Building2, Sprout,
-  Users, Shield, Tractor, Package,
+  Users, Shield, Tractor, Package, KeyRound,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,14 +19,17 @@ const menuItems: Record<Role, { title: string; url: string; icon: React.ElementT
     { title: "Giống cây trồng", url: "/crops", icon: Sprout },
     { title: "Người dùng", url: "/users", icon: Users },
     { title: "Tiêu chuẩn", url: "/standards", icon: Shield },
+    { title: "Khóa số", url: "/keys", icon: KeyRound },
   ],
   farmer: [
     { title: "Trang chủ", url: "/dashboard", icon: LayoutDashboard },
     { title: "Trang trại", url: "/farms", icon: Building2 },
     { title: "Lô hàng của tôi", url: "/dashboard", icon: Leaf },
+    { title: "Khóa số", url: "/settings", icon: KeyRound },
   ],
   inspector: [
     { title: "Kiểm định", url: "/dashboard", icon: ClipboardCheck },
+    { title: "Khóa số", url: "/settings", icon: KeyRound },
   ],
   public: [
     { title: "Tra cứu sản phẩm", url: "/trace/AGT-2024-001", icon: QrCode },

@@ -1,6 +1,6 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useBatch, useTransitionBatch } from "@/hooks/use-batches";
 import { useFarms } from "@/hooks/use-farms";
 import { useCropCategories } from "@/hooks/use-crop-categories";
@@ -16,7 +16,17 @@ import {
   useDeleteInspection,
   useSignInspection,
 } from "@/hooks/use-inspections";
+import { useUserKeys } from "@/hooks/use-keys";
 import { useAuthStore } from "@/stores/auth-store";
+import {
+  importPrivateKey,
+  signData,
+  getPrivateKey,
+  storePrivateKey,
+  buildActivityLogCanonical,
+  buildInspectionCanonical,
+  readPemFile,
+} from "@/lib/crypto";
 import { TimelineStep } from "@/components/TimelineStep";
 import { StatusBadge } from "@/components/StatusBadge";
 import { QRCodeDisplay } from "@/components/QRCodeDisplay";
@@ -57,6 +67,8 @@ import {
   FlaskConical,
   Eye,
   Award,
+  KeyRound,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -154,6 +166,15 @@ export default function BatchDetail() {
       setInspectionResultDialogOpen(true);
       return;
     }
+    // If we're transitioning to HARVESTED, open a dialog to collect date/quantity
+    if (nextStatus.value === 'HARVESTED') {
+      setHarvestForm({
+        actual_harvest_date: batch?.actual_harvest_date ? batch.actual_harvest_date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        harvested_quantity: batch?.harvested_quantity ?? "",
+      });
+      setHarvestDialogOpen(true);
+      return;
+    }
     try {
       const body: any = { next_status: nextStatus.value as any };
       await transitionBatch.mutateAsync({ id, body });
@@ -177,6 +198,28 @@ export default function BatchDetail() {
     }
   };
 
+  const handleHarvestConfirm = async () => {
+    if (!id) return;
+    try {
+      if (!harvestForm.actual_harvest_date || !harvestForm.harvested_quantity) {
+        toast.error("Vui lòng nhập ngày thu hoạch và sản lượng");
+        return;
+      }
+      await transitionBatch.mutateAsync({
+        id,
+        body: {
+          next_status: "HARVESTED",
+          actual_harvest_date: new Date(harvestForm.actual_harvest_date).toISOString(),
+          harvested_quantity: String(harvestForm.harvested_quantity),
+        },
+      });
+      toast.success("Chuyển trạng thái thành công → Đã thu hoạch");
+      setHarvestDialogOpen(false);
+    } catch (e: any) {
+      toast.error("Lỗi chuyển trạng thái", { description: e.message });
+    }
+  };
+
   // Activity Log mutations
   const createLog = useCreateActivityLog();
   const deleteLog = useDeleteActivityLog();
@@ -187,11 +230,23 @@ export default function BatchDetail() {
   const deleteInspection = useDeleteInspection();
   const signInspection = useSignInspection();
 
+  // User keys
+  const { data: keysData } = useUserKeys();
+  const activeKey = keysData?.keys?.find((k) => k.is_active);
+
   // Dialog states
   const [logDialogOpen, setLogDialogOpen] = useState(false);
   const [insDialogOpen, setInsDialogOpen] = useState(false);
   const [inspectionResultDialogOpen, setInspectionResultDialogOpen] = useState(false);
   const [inspectionResultValue, setInspectionResultValue] = useState("PASS");
+  const [harvestDialogOpen, setHarvestDialogOpen] = useState(false);
+  const [harvestForm, setHarvestForm] = useState({ actual_harvest_date: "", harvested_quantity: "" });
+
+  // Sign dialog state
+  const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [signTarget, setSignTarget] = useState<{ type: "log" | "inspection"; id: string } | null>(null);
+  const [signing, setSigning] = useState(false);
+  const pemFileRef = useRef<HTMLInputElement>(null);
 
   // Activity log form
   const [logForm, setLogForm] = useState({
@@ -226,7 +281,9 @@ export default function BatchDetail() {
 
   const farm = farmData?.items?.find((f) => f.id === batch.farm_id);
   const crop = cropData?.items?.find((c) => c.id === batch.crop_category_id);
-  const currentStep = STATUS_ORDER[batch.status] ?? 1;
+  // STATUS_ORDER maps status to the step that is already DONE.
+  // Advance by 1 so the completed step renders as "completed" and the next step renders as "current".
+  const currentStep = (STATUS_ORDER[batch.status] ?? 0) + 1;
   const activityLogs = logsData?.logs ?? [];
   const inspections = insData?.inspections ?? [];
 
@@ -262,19 +319,89 @@ export default function BatchDetail() {
     }
   };
 
-  const handleSignLog = async (logId: string) => {
+  const openSignDialog = (type: "log" | "inspection", id: string) => {
+    if (!activeKey) {
+      toast.error("Chưa có khóa số", { description: "Vui lòng tạo khóa số trong phần Cài đặt trước khi ký" });
+      return;
+    }
+    setSignTarget({ type, id });
+    setSignDialogOpen(true);
+  };
+
+  const handleSignWithPem = async (file: File) => {
+    if (!signTarget || !activeKey) return;
+    setSigning(true);
     try {
+      const pem = await readPemFile(file);
+      const cryptoKey = await importPrivateKey(pem);
+
+      // Lưu vào IndexedDB để lần sau không cần upload lại
+      await storePrivateKey(activeKey.key_id, cryptoKey);
+
+      await performSign(cryptoKey);
+    } catch (e: any) {
+      toast.error("Lỗi ký", { description: e.message });
+    } finally {
+      setSigning(false);
+    }
+  };
+
+  const handleSignWithStoredKey = async () => {
+    if (!signTarget || !activeKey) return;
+    setSigning(true);
+    try {
+      const cryptoKey = await getPrivateKey(activeKey.key_id);
+      if (!cryptoKey) {
+        toast.error("Không tìm thấy khóa trong trình duyệt", { description: "Vui lòng upload file .pem" });
+        setSigning(false);
+        return;
+      }
+      await performSign(cryptoKey);
+    } catch (e: any) {
+      toast.error("Lỗi ký", { description: e.message });
+    } finally {
+      setSigning(false);
+    }
+  };
+
+  const performSign = async (cryptoKey: CryptoKey) => {
+    if (!signTarget || !activeKey) return;
+
+    if (signTarget.type === "log") {
+      const log = activityLogs.find((l) => l.id === signTarget.id);
+      if (!log) throw new Error("Không tìm thấy nhật ký");
+      const canonical = buildActivityLogCanonical(log);
+      const signature = await signData(cryptoKey, canonical);
       await signLog.mutateAsync({
-        id: logId,
+        id: signTarget.id,
         body: {
-          digital_signature: btoa(`signed-by-${user?.id}-at-${Date.now()}`),
+          digital_signature: signature,
           signed_at: new Date().toISOString(),
+          signer_key_id: activeKey.key_id,
         },
       });
       toast.success("Đã ký nhật ký thành công");
-    } catch (e: any) {
-      toast.error("Lỗi ký", { description: e.message });
+    } else {
+      const ins = inspections.find((i) => i.id === signTarget.id);
+      if (!ins) throw new Error("Không tìm thấy kiểm định");
+      const canonical = buildInspectionCanonical(ins);
+      const signature = await signData(cryptoKey, canonical);
+      await signInspection.mutateAsync({
+        id: signTarget.id,
+        body: {
+          digital_signature: signature,
+          signed_at: new Date().toISOString(),
+          signer_key_id: activeKey.key_id,
+        },
+      });
+      toast.success("Đã ký kiểm định thành công");
     }
+    setSignDialogOpen(false);
+    setSignTarget(null);
+  };
+
+  const handleSignLog = (logId: string) => {
+    openSignDialog("log", logId);
   };
 
   const handleDeleteLog = async (logId: string) => {
@@ -315,19 +442,8 @@ export default function BatchDetail() {
     }
   };
 
-  const handleSignInspection = async (insId: string) => {
-    try {
-      await signInspection.mutateAsync({
-        id: insId,
-        body: {
-          digital_signature: btoa(`inspector-${user?.id}-signed-at-${Date.now()}`),
-          signed_at: new Date().toISOString(),
-        },
-      });
-      toast.success("Đã ký kiểm định thành công");
-    } catch (e: any) {
-      toast.error("Lỗi ký", { description: e.message });
-    }
+  const handleSignInspection = (insId: string) => {
+    openSignDialog("inspection", insId);
   };
 
   const handleDeleteInspection = async (insId: string) => {
@@ -705,6 +821,91 @@ export default function BatchDetail() {
           </Tabs>
         </div>
       </div>
+
+      {/* Dialog thu hoạch */}
+      <Dialog open={harvestDialogOpen} onOpenChange={(open) => setHarvestDialogOpen(open)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Thu hoạch</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Ngày thu hoạch</Label>
+              <Input
+                type="date"
+                value={harvestForm.actual_harvest_date}
+                onChange={(e) => setHarvestForm((p) => ({ ...p, actual_harvest_date: e.target.value }))}
+                readOnly={!isFarmer && !isAdmin}
+              />
+            </div>
+            <div>
+              <Label>Sản lượng ({batch.unit})</Label>
+              <Input
+                type="number"
+                value={harvestForm.harvested_quantity}
+                onChange={(e) => setHarvestForm((p) => ({ ...p, harvested_quantity: e.target.value }))}
+                readOnly={!isFarmer && !isAdmin}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setHarvestDialogOpen(false)}>Huỷ</Button>
+              <Button onClick={handleHarvestConfirm}>Xác nhận</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog ký số RSA */}
+      <Dialog open={signDialogOpen} onOpenChange={(open) => { if (!signing) { setSignDialogOpen(open); if (!open) setSignTarget(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4" />
+              Ký số {signTarget?.type === "log" ? "nhật ký" : "kiểm định"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Key ID: <code className="text-xs">{activeKey?.key_id?.slice(0, 8)}...</code>
+            </p>
+
+            <input
+              ref={pemFileRef}
+              type="file"
+              accept=".pem"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleSignWithPem(file);
+                e.target.value = "";
+              }}
+            />
+
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleSignWithStoredKey}
+                disabled={signing}
+              >
+                {signing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
+                Ký bằng khóa đã lưu
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => pemFileRef.current?.click()}
+                disabled={signing}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload file .pem
+              </Button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Nếu chưa lưu khóa trong trình duyệt, hãy upload file .pem được tải về khi tạo khóa.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog chọn kết quả kiểm định (thay window.prompt) */}
       <Dialog open={inspectionResultDialogOpen} onOpenChange={setInspectionResultDialogOpen}>

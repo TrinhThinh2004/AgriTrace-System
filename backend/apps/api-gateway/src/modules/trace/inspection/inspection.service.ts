@@ -10,6 +10,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { withAuthMetadata } from '../../../common/grpc/with-auth-metadata';
 import { Role } from '../../../common/enums';
 import { BatchService } from '../../product/batch/batch.service';
+import { SignatureVerifyService } from '../../../common/services/signature-verify.service';
 interface TraceServiceGrpc {
   createInspection(data: any, metadata?: any): Observable<any>;
   updateInspection(data: any, metadata?: any): Observable<any>;
@@ -29,6 +30,7 @@ export class InspectionService implements OnModuleInit {
   constructor(
     @Inject('TRACE_SERVICE') private readonly traceClient: ClientGrpc,
     private readonly batchService: BatchService,
+    private readonly signatureService: SignatureVerifyService,
   ) {}
 
   onModuleInit() {
@@ -98,10 +100,26 @@ export class InspectionService implements OnModuleInit {
   // ký cũng cần check quyền trên batch chứa log trước, tránh trường hợp user có thể thao tác trên log của batch khác
   async sign(
     id: string,
-    dto: { digital_signature: string; signed_at: string },
+    dto: { digital_signature: string; signed_at: string; signer_key_id: string },
     user: AuthUser,
   ) {
     await this.assertOwnsInspection(user, id);
+
+    // Lấy inspection hiện tại để build canonical data
+    const current = await firstValueFrom(
+      this.trace.getInspectionById({ id }, withAuthMetadata(user)),
+    );
+
+    // Verify chữ ký số bằng public key trước khi forward
+    const canonical =
+      this.signatureService.buildInspectionCanonical(current);
+    await this.signatureService.verifySignature({
+      signer_key_id: dto.signer_key_id,
+      digital_signature: dto.digital_signature,
+      canonical_data: canonical,
+      expected_user_id: user.id,
+    });
+
     return firstValueFrom(
       this.trace.signInspection({ id, ...dto }, withAuthMetadata(user)),
     );

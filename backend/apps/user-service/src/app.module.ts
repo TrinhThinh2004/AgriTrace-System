@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { KeyModule } from './keys/key.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -26,7 +27,9 @@ import { HealthController } from './health.controller';
     }),
 
     AuthModule,
+    KeyModule,
   ],
   controllers: [HealthController],
 })
 export class AppModule {}
+

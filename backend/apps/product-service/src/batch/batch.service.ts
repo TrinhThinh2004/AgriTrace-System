@@ -258,27 +258,33 @@ export class BatchService {
     }
 
     // Pre-conditions theo từng transition
-    if (next === BatchStatus.HARVESTED) {
-      if (!input.actual_harvest_date)
-        throw new BadRequestException(
-          'actual_harvest_date là bắt buộc khi chuyển sang HARVESTED',
-        );
-      if (input.harvested_quantity === undefined || input.harvested_quantity === '')
-        throw new BadRequestException(
-          'harvested_quantity là bắt buộc khi chuyển sang HARVESTED',
-        );
+  if (next === BatchStatus.HARVESTED) {
+  if (!input.actual_harvest_date || !input.actual_harvest_date.toString().trim()) {
+    throw new BadRequestException(
+      'actual_harvest_date là bắt buộc khi chuyển sang HARVESTED',
+    );
+  }
 
-      const ah = parseDate(input.actual_harvest_date)!;
-      if (batch.planting_date && ah <= new Date(batch.planting_date)) {
-        throw new BadRequestException(
-          'actual_harvest_date phải lớn hơn planting_date',
-        );
-      }
-      const hq = parseNumber(input.harvested_quantity)!;
-      batch.actual_harvest_date = ah as any;
-      batch.harvested_quantity = hq as any;
-    }
+  if (input.harvested_quantity === undefined || input.harvested_quantity === '') {
+    throw new BadRequestException(
+      'harvested_quantity là bắt buộc khi chuyển sang HARVESTED',
+    );
+  }
 
+  const ah = parseDate(input.actual_harvest_date)!;
+
+  
+  if (batch.planting_date && ah <= new Date(batch.planting_date)) {
+    throw new BadRequestException(
+      'actual_harvest_date phải lớn hơn planting_date',
+    );
+  }
+
+  const hq = parseNumber(input.harvested_quantity)!;
+
+  batch.actual_harvest_date = ah as any;
+  batch.harvested_quantity = hq as any;
+}
     if (next === BatchStatus.SHIPPED) {
       if (input.shipped_quantity === undefined || input.shipped_quantity === '')
         throw new BadRequestException(
