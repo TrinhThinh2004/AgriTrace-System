@@ -24,8 +24,6 @@ import { Plus, Loader2 } from "lucide-react";
 const INITIAL_FORM = {
   name: "",
   address: "",
-  location_lat: "",
-  location_long: "",
   area_hectares: "",
   certification_status: "NONE",
 };
@@ -44,8 +42,6 @@ export function CreateFarmDialog() {
       await createFarm.mutateAsync({
         name: form.name,
         address: form.address || undefined,
-        location_lat: form.location_lat || undefined,
-        location_long: form.location_long || undefined,
         area_hectares: form.area_hectares || undefined,
         certification_status: form.certification_status,
       });
@@ -88,27 +84,6 @@ export function CreateFarmDialog() {
               value={form.address}
               onChange={(e) => set("address", e.target.value)}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Vĩ độ (Lat)</Label>
-              <Input
-                type="number"
-                placeholder="VD: 11.9404"
-                value={form.location_lat}
-                onChange={(e) => set("location_lat", e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Kinh độ (Long)</Label>
-              <Input
-                type="number"
-                placeholder="VD: 108.4583"
-                value={form.location_long}
-                onChange={(e) => set("location_long", e.target.value)}
-              />
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

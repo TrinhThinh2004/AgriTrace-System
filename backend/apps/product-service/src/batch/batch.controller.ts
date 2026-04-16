@@ -1,8 +1,9 @@
-import { Controller, UseInterceptors } from '@nestjs/common';
+import { Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { BatchService } from './batch.service';
 import { Batch } from '../entities/batch.entity';
 import { GrpcAuthContext, GrpcAuthInterceptor } from '../common/grpc-auth.interceptor';
+import { GrpcExceptionFilter } from '../common/grpc-exception.filter';
 
 function toResponse(b: Batch) {
   return {
@@ -34,6 +35,7 @@ interface AuthData {
 // Controller chỉ nhận gRPC request, không có HTTP endpoint
 @Controller()
 @UseInterceptors(GrpcAuthInterceptor)
+@UseFilters(new GrpcExceptionFilter())
 export class BatchController {
   constructor(private readonly service: BatchService) { }
 

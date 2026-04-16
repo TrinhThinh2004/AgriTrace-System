@@ -40,8 +40,6 @@ export default function FarmsManagement() {
   const [editForm, setEditForm] = useState({
     name: "",
     address: "",
-    location_lat: "",
-    location_long: "",
     area_hectares: "",
     certification_status: "NONE",
     status: "ACTIVE",
@@ -63,8 +61,6 @@ export default function FarmsManagement() {
     setEditForm({
       name: farm.name,
       address: farm.address ?? "",
-      location_lat: farm.location_lat ?? "",
-      location_long: farm.location_long ?? "",
       area_hectares: farm.area_hectares ?? "",
       certification_status: farm.certification_status ?? "NONE",
       status: farm.status ?? "ACTIVE",
@@ -79,8 +75,6 @@ export default function FarmsManagement() {
         body: {
           name: editForm.name || undefined,
           address: editForm.address || undefined,
-          location_lat: editForm.location_lat || undefined,
-          location_long: editForm.location_long || undefined,
           area_hectares: editForm.area_hectares || undefined,
           certification_status: editForm.certification_status || undefined,
           status: editForm.status || undefined,
@@ -198,26 +192,6 @@ export default function FarmsManagement() {
                   value={editForm.address}
                   onChange={(e) => setEditForm((p) => ({ ...p, address: e.target.value }))}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Vĩ độ (Lat)</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={editForm.location_lat}
-                    onChange={(e) => setEditForm((p) => ({ ...p, location_lat: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>Kinh độ (Long)</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={editForm.location_long}
-                    onChange={(e) => setEditForm((p) => ({ ...p, location_long: e.target.value }))}
-                  />
-                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

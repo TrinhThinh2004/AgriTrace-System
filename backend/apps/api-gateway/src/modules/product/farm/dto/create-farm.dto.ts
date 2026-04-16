@@ -2,19 +2,21 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
-  IsUUID,
+  Matches,
   IsIn,
   IsNumberString,
 } from 'class-validator';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export class CreateFarmDto {
   @IsOptional()
-  @IsUUID('4', { message: 'owner_id phải là UUID hợp lệ' })
+  @Matches(UUID_REGEX, { message: 'owner_id phải là UUID hợp lệ' })
   owner_id?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Tên farm không được để trống' })
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()

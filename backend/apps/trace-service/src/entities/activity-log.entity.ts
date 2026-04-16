@@ -16,7 +16,7 @@ export class ActivityLog {
   @Column({ type: 'uuid' })
   batch_id!: string;
 
-  // loại hoạt động: SEEDING, FERTILIZING, SPRAYING, WATERING, PRUNING, HARVESTING, PACKING, OTHER
+  // loại hoạt động: SEEDING, FERTILI ZING, SPRAYING, WATERING, PRUNING, HARVESTING, PACKING, OTHER
   @Column({ type: 'enum', enum: ActivityType })
   activity_type!: ActivityType;
 

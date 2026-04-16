@@ -11,7 +11,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user?.role === "public") router.replace("/trace/AGT-2024-001");
+    if (user?.role === "public") router.replace("/trace/BATCH-RAU-2025-001");
   }, [user, router]);
 
   if (!user) return null;

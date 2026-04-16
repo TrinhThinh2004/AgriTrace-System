@@ -24,7 +24,7 @@ export default function InspectorDashboard() {
   const farms = farmData?.items ?? [];
 
   // Inspector xem các batch cần kiểm định (HARVESTED) hoặc đang xử lý
-  const pendingBatches = batches.filter((b) => b.status === "HARVESTED" || b.status === "GROWING");
+  const pendingBatches = batches.filter((b) => ["GROWING", "HARVESTED", "INSPECTED"].includes(b.status));
   const selectedBatch = batches.find((b) => b.id === selected);
   const selectedFarm = selectedBatch ? farms.find((f) => f.id === selectedBatch.farm_id) : undefined;
 

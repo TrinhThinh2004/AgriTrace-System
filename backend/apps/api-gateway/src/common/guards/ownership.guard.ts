@@ -64,7 +64,7 @@ export class OwnershipGuard implements CanActivate, OnModuleInit {
     if (!user) throw new ForbiddenException('Thiếu thông tin người dùng');
 
     // ADMIN & INSPECTOR bypass
-    if (user.role === Role.ADMIN ) return true;
+    if (user.role === Role.ADMIN || user.role === Role.INSPECTOR) return true;
 
     const resourceId = req.params?.[meta.paramName];
     if (!resourceId) {

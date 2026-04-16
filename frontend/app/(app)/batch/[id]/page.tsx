@@ -148,19 +148,30 @@ export default function BatchDetail() {
 
   const handleTransition = async () => {
     if (!nextStatus || !id) return;
+    // Inspector performing INSPECTED transition → open dialog instead of window.prompt
+    if (isInspector && nextStatus.value === 'INSPECTED') {
+      setInspectionResultValue("PASS");
+      setInspectionResultDialogOpen(true);
+      return;
+    }
     try {
       const body: any = { next_status: nextStatus.value as any };
-      // If inspector is performing INSPECTED transition, ask for inspection result
-      if (isInspector && nextStatus.value === 'INSPECTED') {
-        const res = window.prompt('Nhập kết quả kiểm định (PASS, FAIL, CONDITIONAL_PASS):', 'PASS');
-        if (!res) return;
-        body.inspection_result = res;
-      }
+      await transitionBatch.mutateAsync({ id, body });
+      toast.success(`Chuyển trạng thái thành công → ${nextStatus.label}`);
+    } catch (e: any) {
+      toast.error("Lỗi chuyển trạng thái", { description: e.message });
+    }
+  };
+
+  const handleInspectionConfirm = async () => {
+    if (!nextStatus || !id) return;
+    try {
       await transitionBatch.mutateAsync({
         id,
-        body,
+        body: { next_status: nextStatus.value as any, inspection_result: inspectionResultValue },
       });
       toast.success(`Chuyển trạng thái thành công → ${nextStatus.label}`);
+      setInspectionResultDialogOpen(false);
     } catch (e: any) {
       toast.error("Lỗi chuyển trạng thái", { description: e.message });
     }
@@ -179,6 +190,8 @@ export default function BatchDetail() {
   // Dialog states
   const [logDialogOpen, setLogDialogOpen] = useState(false);
   const [insDialogOpen, setInsDialogOpen] = useState(false);
+  const [inspectionResultDialogOpen, setInspectionResultDialogOpen] = useState(false);
+  const [inspectionResultValue, setInspectionResultValue] = useState("PASS");
 
   // Activity log form
   const [logForm, setLogForm] = useState({
@@ -452,8 +465,19 @@ export default function BatchDetail() {
                             <Input type="date" value={logForm.performed_at} onChange={(e) => setLogForm((p) => ({ ...p, performed_at: e.target.value }))} />
                           </div>
                           <div>
-                            <Label>Địa điểm</Label>
-                            <Input value={logForm.location} onChange={(e) => setLogForm((p) => ({ ...p, location: e.target.value }))} placeholder="Ví dụ: Ruộng A1" />
+                            <Label>Khu vực</Label>
+                            <Select value={logForm.location} onValueChange={(v) => setLogForm((p) => ({ ...p, location: v }))}>
+                              <SelectTrigger><SelectValue placeholder="Chọn khu vực" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Ruộng A">Ruộng A</SelectItem>
+                                <SelectItem value="Ruộng B">Ruộng B</SelectItem>
+                                <SelectItem value="Ruộng C">Ruộng C</SelectItem>
+                                <SelectItem value="Nhà kho">Nhà kho</SelectItem>
+                                <SelectItem value="Nhà đóng gói">Nhà đóng gói</SelectItem>
+                                <SelectItem value="Vườn ươm">Vườn ươm</SelectItem>
+                                <SelectItem value="Toàn trang trại">Toàn trang trại</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
                             <div>
@@ -681,6 +705,37 @@ export default function BatchDetail() {
           </Tabs>
         </div>
       </div>
+
+      {/* Dialog chọn kết quả kiểm định (thay window.prompt) */}
+      <Dialog open={inspectionResultDialogOpen} onOpenChange={setInspectionResultDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Kết quả kiểm định</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Chọn kết quả</Label>
+              <Select value={inspectionResultValue} onValueChange={setInspectionResultValue}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {INSPECTION_RESULTS.filter((r) => r.value !== "PENDING").map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setInspectionResultDialogOpen(false)}>
+                Hủy
+              </Button>
+              <Button className="flex-1" onClick={handleInspectionConfirm} disabled={transitionBatch.isPending}>
+                {transitionBatch.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Xác nhận
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

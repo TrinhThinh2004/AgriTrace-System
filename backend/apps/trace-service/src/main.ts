@@ -3,6 +3,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { GrpcExceptionFilter } from './common/grpc-exception.filter';
 
 async function bootstrap() {
   // ── Hybrid app: HTTP (health check) + gRPC (business) ──
@@ -12,7 +13,7 @@ async function bootstrap() {
   const grpcUrl = configService.get<string>('TRACE_SERVICE_GRPC_URL') || '0.0.0.0:50053';
 
   // ── Connect gRPC microservice ──
-  app.connectMicroservice<MicroserviceOptions>({
+  const microservice = app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,
     options: {
       url: grpcUrl,
@@ -21,6 +22,10 @@ async function bootstrap() {
       loader: { keepCase: true },
     },
   });
+
+  // APP_FILTER chỉ apply cho HTTP context trong hybrid app,
+  // cần register riêng cho microservice context
+  microservice.useGlobalFilters(new GrpcExceptionFilter());
 
   await app.startAllMicroservices();
 

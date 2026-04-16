@@ -26,4 +26,10 @@ export class TransitionBatchDto {
   @IsOptional()
   @IsNumberString({}, { message: 'shipped_quantity phải là số' })
   shipped_quantity?: string;
+
+  @IsOptional()
+  @IsIn(['PASS', 'CONDITIONAL_PASS', 'FAIL'], {
+    message: 'inspection_result phải là PASS, CONDITIONAL_PASS hoặc FAIL',
+  })
+  inspection_result?: string;
 }

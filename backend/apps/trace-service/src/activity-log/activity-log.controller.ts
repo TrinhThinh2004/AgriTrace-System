@@ -1,8 +1,9 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { ActivityLogService } from './activity-log.service';
 import { ActivityLog } from '../entities/activity-log.entity';
-import { GrpcAuthContext } from '../common/grpc-auth.interceptor';
+import { GrpcAuthContext, GrpcAuthInterceptor } from '../common/grpc-auth.interceptor';
+import { GrpcExceptionFilter } from '../common/grpc-exception.filter';
 
 function toResponse(l: ActivityLog) {
   return {
@@ -20,13 +21,18 @@ function toResponse(l: ActivityLog) {
   };
 }
 
+
+
+
 interface AuthData {
   __auth?: GrpcAuthContext;
 }
 
 @Controller()
+@UseInterceptors(GrpcAuthInterceptor)
+@UseFilters(new GrpcExceptionFilter())
 export class ActivityLogController {
-  constructor(private readonly service: ActivityLogService) {}
+  constructor(private readonly service: ActivityLogService) { }
 
   @GrpcMethod('TraceService', 'CreateActivityLog')
   async create(data: AuthData & Record<string, any>) {

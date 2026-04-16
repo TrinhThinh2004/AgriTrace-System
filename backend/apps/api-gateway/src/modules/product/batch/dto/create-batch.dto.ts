@@ -2,24 +2,26 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
-  IsUUID,
+  Matches,
   IsDateString,
 } from 'class-validator';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class CreateBatchDto {
   @IsString()
   @IsNotEmpty({ message: 'batch_code không được để trống' })
-  batch_code: string;
+  batch_code!: string;
 
-  @IsUUID('4', { message: 'farm_id phải là UUID hợp lệ' })
-  farm_id: string;
+  @Matches(UUID_REGEX, { message: 'farm_id phải là UUID hợp lệ' })
+  farm_id!: string;
 
-  @IsUUID('4', { message: 'crop_category_id phải là UUID hợp lệ' })
-  crop_category_id: string;
+  @Matches(UUID_REGEX, { message: 'crop_category_id phải là UUID hợp lệ' })
+  crop_category_id!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Tên batch không được để trống' })
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsDateString({}, { message: 'planting_date phải là ngày hợp lệ (ISO 8601)' })

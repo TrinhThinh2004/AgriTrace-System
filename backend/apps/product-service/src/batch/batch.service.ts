@@ -45,6 +45,7 @@ interface TransitionInput {
   actual_harvest_date?: string;
   harvested_quantity?: string | number;
   shipped_quantity?: string | number;
+  inspection_result?: string;
 }
 
 interface ListParams {
@@ -214,14 +215,14 @@ export class BatchService {
       throw new ForbiddenException('Thiếu thông tin caller');
     }
 
-    // Role-based authorization for transitions
+    // ABAC: kiểm tra quyền chuyển trạng thái dựa trên role của caller
     if (caller.role !== Role.ADMIN) {
       if (caller.role === Role.FARMER) {
         // Farmer must be owner of farm
         if (!batch.farm || batch.farm.owner_id !== caller.userId) {
           throw new ForbiddenException('Bạn không sở hữu lô hàng này');
         }
-        // Farmer allowed transitions: SEEDING -> GROWING, GROWING -> HARVESTED
+        // Farmer chỉ được phép chuyển SEEDING → GROWING → HARVESTED
         const okForFarmer =
           (batch.status === BatchStatus.SEEDING && input.next_status === BatchStatus.GROWING) ||
           (batch.status === BatchStatus.GROWING && input.next_status === BatchStatus.HARVESTED);
@@ -229,12 +230,12 @@ export class BatchService {
           throw new ForbiddenException('Farmer không được chuyển trạng thái này');
         }
       } else if (caller.role === Role.INSPECTOR) {
-        // Inspector allowed only HARVESTED -> INSPECTED
+        // Inspector chỉ được phép chuyển HARVESTED → INSPECTED
         if (!(batch.status === BatchStatus.HARVESTED && input.next_status === BatchStatus.INSPECTED)) {
           throw new ForbiddenException('Inspector chỉ được chuyển HARVESTED → INSPECTED');
         }
-        // Prevent marking INSPECTED if inspection result is FAIL — require PASS or CONDITIONAL_PASS
-        const inspectionResult = (input as any).inspection_result;
+        // Pre-condition: kết quả kiểm định phải là PASS hoặc CONDIT
+        const inspectionResult = input.inspection_result;
         const allowedResults = ["PASS", "CONDITIONAL_PASS"];
         if (!inspectionResult || !allowedResults.includes(String(inspectionResult))) {
           throw new BadRequestException('Không thể chuyển sang INSPECTED khi kết quả kiểm định chưa là PASS/CONDITIONAL_PASS');

@@ -13,7 +13,7 @@ interface ProductServiceGrpc {
 
 @Injectable()
 export class FarmService implements OnModuleInit {
-  private grpc: ProductServiceGrpc;
+  private grpc!: ProductServiceGrpc;
 
   constructor(
     @Inject('PRODUCT_SERVICE') private readonly client: ClientGrpc,

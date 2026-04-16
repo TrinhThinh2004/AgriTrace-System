@@ -1,8 +1,9 @@
-import { Controller, UseInterceptors } from '@nestjs/common';
+import { Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { FarmService } from './farm.service';
 import { Farm } from '../entities/farm.entity';
 import { GrpcAuthContext, GrpcAuthInterceptor } from '../common/grpc-auth.interceptor';
+import { GrpcExceptionFilter } from '../common/grpc-exception.filter';
 
 function toResponse(farm: Farm) {
   return {
@@ -26,7 +27,8 @@ interface AuthData {
 
 // Controller chỉ nhận gRPC request, không có HTTP endpoint
 @Controller()
-// @UseInterceptors(GrpcAuthInterceptor)
+@UseInterceptors(GrpcAuthInterceptor)
+@UseFilters(new GrpcExceptionFilter())
 export class FarmController {
   constructor(private readonly service: FarmService) { }
 

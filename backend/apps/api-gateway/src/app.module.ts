@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { GrpcToHttpExceptionFilter } from './common/filters/grpc-to-http-exception.filter';
 
 import { AuthModule }    from './modules/auth/auth.module';
 import { UserModule }    from './modules/user/user.module';
@@ -30,6 +31,8 @@ import { PolicyModule } from './common/policy.module';
     { provide: APP_GUARD, useClass: RolesGuard },
     // ABAC: kiểm tra ownership theo @OwnsFarm() / @OwnsBatch().
     { provide: APP_GUARD, useClass: OwnershipGuard },
+    // Chuyển gRPC errors từ microservices → HTTP response codes
+    { provide: APP_FILTER, useClass: GrpcToHttpExceptionFilter },
   ],
 })
 export class AppModule {}

@@ -57,8 +57,8 @@ export class BatchController {
   ) {
     return this.service.update(id, dto, user);
   }
-  // Endpoint để chuyển trạng thái batch, chỉ owner (farmer) mới được phép chuyển trạng thái
-  @Roles(Role.ADMIN, Role.FARMER)
+  // Endpoint để chuyển trạng thái batch
+  @Roles(Role.ADMIN,Role.INSPECTOR, Role.FARMER)
   @OwnsBatch('id')
   @Post(':id/transition')
   transitionStatus(

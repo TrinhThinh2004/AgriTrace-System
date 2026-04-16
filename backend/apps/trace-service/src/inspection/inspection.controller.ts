@@ -1,8 +1,9 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { InspectionService } from './inspection.service';
 import { Inspection } from '../entities/inspection.entity';
-import { GrpcAuthContext } from '../common/grpc-auth.interceptor';
+import { GrpcAuthContext, GrpcAuthInterceptor } from '../common/grpc-auth.interceptor';
+import { GrpcExceptionFilter } from '../common/grpc-exception.filter';
 
 function toResponse(i: Inspection) {
   return {
@@ -27,8 +28,10 @@ interface AuthData {
 }
 // InspectionController nhận các gRPC call từ API Gateway, chuyển tiếp đến InspectionService,
 @Controller()
+@UseInterceptors(GrpcAuthInterceptor)
+@UseFilters(new GrpcExceptionFilter())
 export class InspectionController {
-  constructor(private readonly service: InspectionService) {}
+  constructor(private readonly service: InspectionService) { }
 
   @GrpcMethod('TraceService', 'CreateInspection')
   async create(data: AuthData & Record<string, any>) {

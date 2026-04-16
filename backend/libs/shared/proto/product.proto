@@ -227,4 +227,5 @@ message TransitionBatchStatusRequest {
   string actual_harvest_date = 3;
   string harvested_quantity  = 4;
   string shipped_quantity    = 5;
+  string inspection_result   = 6;
 }

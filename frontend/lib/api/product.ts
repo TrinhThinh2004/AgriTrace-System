@@ -110,6 +110,7 @@ export interface TransitionBatchBody {
   actual_harvest_date?: string;
   harvested_quantity?: string;
   shipped_quantity?: string;
+  inspection_result?: string;
 }
 
 // Crop Category
