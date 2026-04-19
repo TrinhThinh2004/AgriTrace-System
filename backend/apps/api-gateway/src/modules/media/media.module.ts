@@ -1,14 +1,33 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { join } from 'path';
+import { MediaController } from './media.controller';
+import { MediaService } from './media.service';
 
-/**
- * MediaModule trong API Gateway chỉ là placeholder.
- * Entities và business logic nằm trong media-service.
- * Mở rộng sau khi media-service được implement gRPC.
- */
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [
+    ClientsModule.registerAsync([
+      {
+        name: 'MEDIA_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.GRPC,
+          options: {
+            url: config.get<string>('MEDIA_SERVICE_GRPC_URL') || 'localhost:50054',
+            package: 'media',
+            protoPath: join(process.cwd(), 'libs/shared/proto/media.proto'),
+            loader: { keepCase: true },
+            maxSendMessageLength: 16 * 1024 * 1024,
+            maxReceiveMessageLength: 16 * 1024 * 1024,
+          },
+        }),
+      },
+    ]),
+  ],
+  controllers: [MediaController],
+  providers: [MediaService],
+  exports: [MediaService],
 })
 export class MediaModule {}

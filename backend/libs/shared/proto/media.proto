@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package media;
+
+// MediaService — quản lý asset (ảnh) lưu trên Cloudinary, metadata trong media-db.
+service MediaService {
+  rpc UploadAsset (UploadAssetRequest) returns (AssetResponse);
+  rpc GetAsset    (GetAssetRequest)    returns (AssetResponse);
+  rpc ListAssets  (ListAssetsRequest)  returns (ListAssetsResponse);
+  rpc DeleteAsset (DeleteAssetRequest) returns (MessageResponse);
+}
+
+// ── Asset ────────────────────────────────────────────────────────────
+message Asset {
+  string id                   = 1;
+  string owner_id             = 2;
+  string ref_type             = 3;  // USER_AVATAR | FARM_PHOTO | BATCH_PHOTO
+  string ref_id               = 4;  // UUID của entity được attach (nullable -> "")
+  string cloudinary_public_id = 5;
+  string url                  = 6;
+  string secure_url           = 7;
+  string mime                 = 8;
+  int64  bytes                = 9;
+  int32  width                = 10;
+  int32  height               = 11;
+  string original_filename    = 12;
+  string created_at           = 13;
+}
+
+// ── Requests / Responses ────────────────────────────────────────────
+message UploadAssetRequest {
+  string owner_id          = 1;
+  string ref_type          = 2;
+  string ref_id            = 3;
+  string mime              = 4;
+  bytes  file_bytes        = 5;
+  string original_filename = 6;
+}
+
+message GetAssetRequest {
+  string id = 1;
+}
+
+message ListAssetsRequest {
+  string ref_type = 1;
+  string ref_id   = 2;
+  string owner_id = 3;
+  int32  page     = 4;
+  int32  limit    = 5;
+}
+
+message ListAssetsResponse {
+  repeated Asset assets = 1;
+  int32 total           = 2;
+  int32 page            = 3;
+  int32 limit           = 4;
+}
+
+message DeleteAssetRequest {
+  string id        = 1;
+  string requester_id = 2;  // user thực hiện xoá (để check quyền)
+  bool   is_admin  = 3;
+}
+
+message AssetResponse {
+  Asset asset = 1;
+}
+
+message MessageResponse {
+  string message = 1;
+}

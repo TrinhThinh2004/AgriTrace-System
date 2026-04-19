@@ -55,7 +55,26 @@ services:
       timeout: 5s
       retries: 5
 
+  media-db:
+    image: postgres:16-alpine
+    container_name: agritrace-media-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: media_admin
+      POSTGRES_PASSWORD: media_pass123
+      POSTGRES_DB: agritrace_media
+    ports:
+      - "5436:5432"
+    volumes:
+      - media_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U media_admin -d agritrace_media"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   user_db_data:
   product_db_data:
   trace_db_data:
+  media_db_data:

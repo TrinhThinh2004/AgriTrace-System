@@ -92,7 +92,7 @@ export default function AdminKeysPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[40]]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
