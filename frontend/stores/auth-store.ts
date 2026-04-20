@@ -8,6 +8,9 @@ export interface BeUser {
   status?: string;
   phone?: string;
   created_at?: string;
+  avatar_url?: string;
+  address?: string;
+  bio?: string;
 }
 
 interface AuthState {

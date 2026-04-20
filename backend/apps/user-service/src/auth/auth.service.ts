@@ -79,7 +79,10 @@ export class AuthService {
 
   // Login method
   async login(dto: LoginRequest) {
-    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    const user = await this.userRepo.findOne({
+      where: { email: dto.email },
+      relations: ['profile'],
+    });
 
     if (!user) {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
@@ -144,9 +147,12 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
-  // Get user by ID 
+  // Get user by ID
   async getUserById(userId: string) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['profile'],
+    });
     if (!user) {
       throw new UnauthorizedException('Không tìm thấy người dùng');
     }
@@ -197,6 +203,39 @@ export class AuthService {
     if (dto.role) user.role = dto.role;
     if (dto.status) user.status = dto.status;
     return this.userRepo.save(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    dto: {
+      full_name?: string;
+      phone?: string;
+      avatar_url?: string;
+      address?: string;
+      bio?: string;
+    },
+  ) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['profile'],
+    });
+    if (!user) throw new NotFoundException('Không tìm thấy user');
+
+    if (dto.full_name !== undefined) user.full_name = dto.full_name;
+    if (dto.phone !== undefined) user.phone = dto.phone;
+    await this.userRepo.save(user);
+
+    let profile = user.profile;
+    if (!profile) {
+      profile = this.profileRepo.create({ user_id: userId });
+    }
+    if (dto.avatar_url !== undefined) profile.avatar_url = dto.avatar_url;
+    if (dto.address !== undefined) profile.address = dto.address;
+    if (dto.bio !== undefined) profile.bio = dto.bio;
+    await this.profileRepo.save(profile);
+
+    user.profile = profile;
+    return this.sanitizeUser(user);
   }
 
   async deleteUser(id: string) {
@@ -257,7 +296,12 @@ export class AuthService {
   // sanitizeUser sẽ loại bỏ các trường nhạy cảm 
   // trước khi trả về thông tin user
   private sanitizeUser(user: User) {
-    const { password_hash, refresh_token_hash, ...safeUser } = user;
-    return safeUser;
+    const { password_hash, refresh_token_hash, profile, ...safeUser } = user;
+    return {
+      ...safeUser,
+      avatar_url: profile?.avatar_url ?? '',
+      address: profile?.address ?? '',
+      bio: profile?.bio ?? '',
+    };
   }
 }

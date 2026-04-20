@@ -21,6 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
+import { ImageUploader } from "@/components/media/ImageUploader";
+import { AssetGallery } from "@/components/media/AssetGallery";
 import {
   useCropCategories,
   useCreateCropCategory,
@@ -245,6 +247,21 @@ export default function CropCategories() {
                 {updateCrop.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 Lưu thay đổi
               </Button>
+
+              <div className="pt-4 border-t space-y-3">
+                <Label>Ảnh minh hoạ</Label>
+                <AssetGallery
+                  refType="CROP_PHOTO"
+                  refId={editCategory.id}
+                  editable
+                  emptyText="Chưa có ảnh"
+                />
+                <ImageUploader
+                  refType="CROP_PHOTO"
+                  refId={editCategory.id}
+                  maxFiles={5}
+                />
+              </div>
             </div>
           )}
         </DialogContent>

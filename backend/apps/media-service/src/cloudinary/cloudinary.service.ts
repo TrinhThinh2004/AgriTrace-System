@@ -16,7 +16,7 @@ export interface UploadResult {
 @Injectable()
 export class CloudinaryService {
   constructor(@Inject(CLOUDINARY) private readonly cloud: typeof cloudinaryType) {}
-
+  // hàm upload nhận vào buffer, folder và publicIdHint (tùy chọn) để upload ảnh lên Cloudinary
   async upload(buffer: Buffer, folder: string, publicIdHint?: string): Promise<UploadResult> {
     return new Promise((resolve, reject) => {
       const stream = this.cloud.uploader.upload_stream(

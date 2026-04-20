@@ -51,14 +51,21 @@ export class MediaService implements OnModuleInit {
     return firstValueFrom(this.grpc.getAsset({ id }));
   }
 
-  list(params: {
+  async list(params: {
     ref_type?: string;
     ref_id?: string;
     owner_id?: string;
     page?: number;
     limit?: number;
   }) {
-    return firstValueFrom(this.grpc.listAssets(params));
+    const res = await firstValueFrom(this.grpc.listAssets(params));
+    const page = Number(res?.page ?? params.page ?? 1);
+    const limit = Number(res?.limit ?? params.limit ?? 20);
+    const total = Number(res?.total ?? 0);
+    return {
+      items: res?.assets ?? [],
+      pagination: { page, limit, total },
+    };
   }
 
   delete(id: string, requesterId: string, isAdmin: boolean) {

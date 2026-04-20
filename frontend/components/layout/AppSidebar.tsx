@@ -7,7 +7,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSidebar } from "./SidebarContext";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/mockData";
 
@@ -92,9 +92,13 @@ export function AppSidebar() {
         {user && (
           <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-2")}>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
-                {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-              </AvatarFallback>
+              {user.avatar ? (
+                <AvatarImage src={user.avatar} alt={user.name} />
+              ) : (
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+                  {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                </AvatarFallback>
+              )}
             </Avatar>
             {!collapsed && (
               <div className="flex-1 min-w-0">

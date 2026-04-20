@@ -69,10 +69,14 @@ export async function apiFetch<T>(
   const { body, skipAuthRefresh, _retried, headers, ...rest } = options;
 
   const accessToken = useAuthStore.getState().accessToken;
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
 
   const finalHeaders: Record<string, string> = {
     Accept: "application/json",
-    ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+    ...(body !== undefined && !isFormData
+      ? { "Content-Type": "application/json" }
+      : {}),
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     ...(headers as Record<string, string> | undefined),
   };
@@ -81,7 +85,12 @@ export async function apiFetch<T>(
     ...rest,
     headers: finalHeaders,
     credentials: "include",
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body:
+      body === undefined
+        ? undefined
+        : isFormData
+          ? (body as FormData)
+          : JSON.stringify(body),
   });
 
   // Auto refresh on 401 (1 lần)

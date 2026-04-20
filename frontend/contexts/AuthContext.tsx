@@ -29,8 +29,8 @@ function mapBeUserToUser(u: BeUser | null): User | null {
     id: u.id,
     name: u.full_name,
     email: u.email,
-    
     role: (u.role?.toLowerCase() as Role) ?? "public",
+    avatar: u.avatar_url ?? undefined,
   };
 }
 

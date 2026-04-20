@@ -27,6 +27,15 @@ interface UserServiceGrpc {
   logout(data: { user_id: string }): Observable<any>;
 
   getProfile(data: { user_id: string }): Observable<any>;
+
+  updateProfile(data: {
+    user_id: string;
+    full_name?: string;
+    phone?: string;
+    avatar_url?: string;
+    address?: string;
+    bio?: string;
+  }): Observable<any>;
 }
 
 @Injectable()
@@ -82,6 +91,28 @@ export class AuthService implements OnModuleInit {
   async getProfile(userId: string) {
     return firstValueFrom(
       this.userService.getProfile({ user_id: userId }),
+    );
+  }
+
+  async updateProfile(
+    userId: string,
+    dto: {
+      full_name?: string;
+      phone?: string;
+      avatar_url?: string;
+      address?: string;
+      bio?: string;
+    },
+  ) {
+    return firstValueFrom(
+      this.userService.updateProfile({
+        user_id:    userId,
+        full_name:  dto.full_name,
+        phone:      dto.phone,
+        avatar_url: dto.avatar_url,
+        address:    dto.address,
+        bio:        dto.bio,
+      }),
     );
   }
 }

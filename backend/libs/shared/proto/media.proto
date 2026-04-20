@@ -14,7 +14,7 @@ service MediaService {
 message Asset {
   string id                   = 1;
   string owner_id             = 2;
-  string ref_type             = 3;  // USER_AVATAR | FARM_PHOTO | BATCH_PHOTO
+  string ref_type             = 3;  // USER_AVATAR | FARM_PHOTO | BATCH_PHOTO | CROP_PHOTO
   string ref_id               = 4;  // UUID của entity được attach (nullable -> "")
   string cloudinary_public_id = 5;
   string url                  = 6;

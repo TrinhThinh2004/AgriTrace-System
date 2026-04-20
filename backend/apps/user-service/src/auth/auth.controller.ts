@@ -3,6 +3,34 @@ import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 
 
+type UserLike = {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  status: string;
+  phone?: string | null;
+  created_at?: Date | null;
+  avatar_url?: string | null;
+  address?: string | null;
+  bio?: string | null;
+};
+
+function toUserResponse(user: UserLike) {
+  return {
+    id:         user.id,
+    email:      user.email,
+    full_name:  user.full_name,
+    role:       user.role,
+    status:     user.status,
+    phone:      user.phone ?? '',
+    created_at: user.created_at?.toISOString() ?? '',
+    avatar_url: user.avatar_url ?? '',
+    address:    user.address ?? '',
+    bio:        user.bio ?? '',
+  };
+}
+
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -15,15 +43,7 @@ export class AuthController {
       return {
         access_token:  result.access_token,
         refresh_token: result.refresh_token,
-        user: {
-          id:         result.user.id,
-          email:      result.user.email,
-          full_name:  result.user.full_name,
-          role:       result.user.role,
-          status:     result.user.status,
-          phone:      result.user.phone ?? '',
-          created_at: result.user.created_at?.toISOString() ?? '',
-        },
+        user: toUserResponse(result.user as UserLike),
       };
     } catch (error) {
       console.error('[User Service] Error in Register:', error);
@@ -39,15 +59,7 @@ export class AuthController {
       return {
         access_token:  result.access_token,
         refresh_token: result.refresh_token,
-        user: {
-          id:         result.user.id,
-          email:      result.user.email,
-          full_name:  result.user.full_name,
-          role:       result.user.role,
-          status:     result.user.status,
-          phone:      result.user.phone ?? '',
-          created_at: result.user.created_at?.toISOString() ?? '',
-        },
+        user: toUserResponse(result.user as UserLike),
       };
     } catch (error) {
       console.error('[User Service] Error in Login:', error);
@@ -74,30 +86,14 @@ export class AuthController {
   @GrpcMethod('UserService', 'GetProfile')
   async getProfile(data: { user_id: string }) {
     const user = await this.authService.getProfile(data.user_id);
-    return {
-      id:         user.id,
-      email:      user.email,
-      full_name:  user.full_name,
-      role:       user.role,
-      status:     user.status,
-      phone:      user.phone ?? '',
-      created_at: user.created_at?.toISOString() ?? '',
-    };
+    return toUserResponse(user as UserLike);
   }
 
   // rpc GetUserById
   @GrpcMethod('UserService', 'GetUserById')
   async getUserById(data: { user_id: string }) {
     const user = await this.authService.getUserById(data.user_id);
-    return {
-      id:         user.id,
-      email:      user.email,
-      full_name:  user.full_name,
-      role:       user.role,
-      status:     user.status,
-      phone:      user.phone ?? '',
-      created_at: user.created_at?.toISOString() ?? '',
-    };
+    return toUserResponse(user as UserLike);
   }
 
   // rpc ListUsers
@@ -110,30 +106,28 @@ export class AuthController {
   @GrpcMethod('UserService', 'CreateUser')
   async createUser(data: { email: string; password?: string; full_name: string; phone?: string; role: string }) {
     const user = await this.authService.createUser(data);
-    return {
-      id:         user.id,
-      email:      user.email,
-      full_name:  user.full_name,
-      role:       user.role,
-      status:     user.status,
-      phone:      user.phone ?? '',
-      created_at: user.created_at?.toISOString() ?? '',
-    };
+    return toUserResponse(user as UserLike);
   }
 
   // rpc UpdateUser
   @GrpcMethod('UserService', 'UpdateUser')
   async updateUser(data: { id: string; full_name?: string; phone?: string; role?: string; status?: string }) {
     const user = await this.authService.updateUser(data.id, data);
-    return {
-      id:         user.id,
-      email:      user.email,
-      full_name:  user.full_name,
-      role:       user.role,
-      status:     user.status,
-      phone:      user.phone ?? '',
-      created_at: user.created_at?.toISOString() ?? '',
-    };
+    return toUserResponse(user as UserLike);
+  }
+
+  // rpc UpdateProfile
+  @GrpcMethod('UserService', 'UpdateProfile')
+  async updateProfile(data: {
+    user_id: string;
+    full_name?: string;
+    phone?: string;
+    avatar_url?: string;
+    address?: string;
+    bio?: string;
+  }) {
+    const user = await this.authService.updateProfile(data.user_id, data);
+    return toUserResponse(user as UserLike);
   }
 
   // rpc DeleteUser

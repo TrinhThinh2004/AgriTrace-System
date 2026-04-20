@@ -16,6 +16,7 @@ service UserService {
   rpc ListUsers     (ListUsersRequest)      returns (ListUsersResponse);
   rpc CreateUser    (CreateUserRequest)     returns (UserResponse);
   rpc UpdateUser    (UpdateUserRequest)     returns (UserResponse);
+  rpc UpdateProfile (UpdateProfileRequest)  returns (UserResponse);
   rpc DeleteUser    (DeleteUserRequest)     returns (MessageResponse);
 
   // Internal service-to-service RPCs
@@ -86,6 +87,18 @@ message UserResponse {
   string status     = 5;
   string phone      = 6;
   string created_at = 7;
+  string avatar_url = 8;
+  string address    = 9;
+  string bio        = 10;
+}
+
+message UpdateProfileRequest {
+  string user_id    = 1;
+  string full_name  = 2;
+  string phone      = 3;
+  string avatar_url = 4;
+  string address    = 5;
+  string bio        = 6;
 }
 
 // ── ValidateToken (dùng cho internal service-to-service) ──────────

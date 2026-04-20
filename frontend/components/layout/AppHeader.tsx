@@ -3,7 +3,7 @@ import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut } from "lucid
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,9 +65,13 @@ export function AppHeader() {
             <DropdownMenuTrigger asChild>
               <button className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-opacity hover:opacity-80 cursor-pointer">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                  </AvatarFallback>
+                  {user.avatar ? (
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
               </button>
             </DropdownMenuTrigger>

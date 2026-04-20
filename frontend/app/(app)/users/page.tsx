@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -243,9 +243,13 @@ export default function UserManagement() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-7 w-7">
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                            {u.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
+                          {u.avatar_url ? (
+                            <AvatarImage src={u.avatar_url} alt={u.full_name} />
+                          ) : (
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {u.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          )}
                         </Avatar>
                         <span className="font-medium text-sm">{u.full_name}</span>
                       </div>

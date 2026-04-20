@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import type { Farm } from "@/lib/api/product";
 
 import { CreateFarmDialog } from "@/components/CreateFarmDialog";
+import { ImageUploader } from "@/components/media/ImageUploader";
+import { AssetGallery } from "@/components/media/AssetGallery";
 
 const certLabel: Record<string, string> = {
   NONE: "Chưa có",
@@ -231,6 +233,21 @@ export default function FarmsManagement() {
                 {updateFarm.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 Lưu thay đổi
               </Button>
+
+              <div className="pt-4 border-t space-y-3">
+                <Label>Ảnh trang trại</Label>
+                <AssetGallery
+                  refType="FARM_PHOTO"
+                  refId={editFarm.id}
+                  editable
+                  emptyText="Chưa có ảnh"
+                />
+                <ImageUploader
+                  refType="FARM_PHOTO"
+                  refId={editFarm.id}
+                  maxFiles={5}
+                />
+              </div>
             </div>
           )}
         </DialogContent>
