@@ -24,7 +24,7 @@ const menuItems: Record<Role, { title: string; url: string; icon: React.ElementT
   farmer: [
     { title: "Trang chủ", url: "/dashboard", icon: LayoutDashboard },
     { title: "Trang trại", url: "/farms", icon: Building2 },
-    { title: "Lô hàng của tôi", url: "/dashboard", icon: Leaf },
+    { title: "Lô hàng của tôi", url: "/batches", icon: Leaf },
     { title: "Khóa số", url: "/settings", icon: KeyRound },
   ],
   inspector: [
@@ -32,7 +32,7 @@ const menuItems: Record<Role, { title: string; url: string; icon: React.ElementT
     { title: "Khóa số", url: "/settings", icon: KeyRound },
   ],
   public: [
-    { title: "Tra cứu sản phẩm", url: "/trace/AGT-2024-001", icon: QrCode },
+    { title: "Tra cứu sản phẩm", url: "/trace/BATCH-RAU-2025-001", icon: QrCode },
   ],
 };
 

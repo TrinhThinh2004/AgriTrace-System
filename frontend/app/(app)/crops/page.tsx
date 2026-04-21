@@ -23,6 +23,12 @@ import {
 import { Plus, Search, Pencil, Trash2, Loader2 } from "lucide-react";
 import { ImageUploader } from "@/components/media/ImageUploader";
 import { AssetGallery } from "@/components/media/AssetGallery";
+import { AssetThumb } from "@/components/media/AssetThumb";
+import {
+  ImagesPickerPreview,
+  type PickedFile,
+} from "@/components/media/ImagesPickerPreview";
+import { useUploadAsset } from "@/hooks/use-media";
 import {
   useCropCategories,
   useCreateCropCategory,
@@ -39,12 +45,19 @@ export default function CropCategories() {
   const [editCategory, setEditCategory] = useState<CropCategory | null>(null);
 
   const [createForm, setCreateForm] = useState({ name: "", description: "" });
+  const [createImages, setCreateImages] = useState<PickedFile[]>([]);
   const [editForm, setEditForm] = useState({ name: "", description: "", status: "ACTIVE" });
 
   const { data, isLoading } = useCropCategories();
   const createCrop = useCreateCropCategory();
   const updateCrop = useUpdateCropCategory();
   const deleteCrop = useDeleteCropCategory();
+  const uploadAsset = useUploadAsset();
+
+  const resetCreateImages = () => {
+    createImages.forEach((i) => URL.revokeObjectURL(i.previewUrl));
+    setCreateImages([]);
+  };
 
   const categories = data?.items ?? [];
   const filtered = categories.filter(
@@ -59,13 +72,34 @@ export default function CropCategories() {
       return;
     }
     try {
-      await createCrop.mutateAsync({
+      const cat = await createCrop.mutateAsync({
         name: createForm.name,
         description: createForm.description || undefined,
       });
+
+      if (createImages.length > 0) {
+        let uploaded = 0;
+        for (const item of createImages) {
+          try {
+            await uploadAsset.mutateAsync({
+              file: item.file,
+              ref_type: "CROP_PHOTO",
+              ref_id: cat.id,
+            });
+            uploaded++;
+          } catch (e: any) {
+            toast.error(`Upload ${item.file.name} thất bại`, {
+              description: e.message,
+            });
+          }
+        }
+        if (uploaded > 0) toast.success(`Đã tải lên ${uploaded} ảnh`);
+      }
+
       toast.success("Thêm loại cây trồng thành công");
       setCreateOpen(false);
       setCreateForm({ name: "", description: "" });
+      resetCreateImages();
     } catch (e: any) {
       toast.error("Lỗi", { description: e.message });
     }
@@ -117,13 +151,19 @@ export default function CropCategories() {
         </div>
 
         {/* Create Dialog */}
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <Dialog
+          open={createOpen}
+          onOpenChange={(o) => {
+            if (!o) resetCreateImages();
+            setCreateOpen(o);
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-1" /> Thêm loại cây
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Thêm loại cây trồng mới</DialogTitle>
             </DialogHeader>
@@ -145,8 +185,22 @@ export default function CropCategories() {
                   rows={3}
                 />
               </div>
-              <Button className="w-full" onClick={handleCreate} disabled={createCrop.isPending}>
-                {createCrop.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              <div className="space-y-1.5">
+                <Label>Ảnh minh hoạ</Label>
+                <ImagesPickerPreview
+                  value={createImages}
+                  onChange={setCreateImages}
+                  disabled={createCrop.isPending || uploadAsset.isPending}
+                />
+              </div>
+              <Button
+                className="w-full"
+                onClick={handleCreate}
+                disabled={createCrop.isPending || uploadAsset.isPending}
+              >
+                {(createCrop.isPending || uploadAsset.isPending) && (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                )}
                 Tạo loại cây trồng
               </Button>
             </div>
@@ -169,6 +223,7 @@ export default function CropCategories() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-14">Ảnh</TableHead>
                   <TableHead>Tên</TableHead>
                   <TableHead>Mô tả</TableHead>
                   <TableHead>Trạng thái</TableHead>
@@ -178,6 +233,9 @@ export default function CropCategories() {
               <TableBody>
                 {filtered.map((c) => (
                   <TableRow key={c.id}>
+                    <TableCell>
+                      <AssetThumb refType="CROP_PHOTO" refId={c.id} size={40} />
+                    </TableCell>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{c.description}</TableCell>
                     <TableCell>
@@ -199,7 +257,7 @@ export default function CropCategories() {
                 ))}
                 {filtered.length === 0 && !isLoading && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       Không tìm thấy loại cây trồng
                     </TableCell>
                   </TableRow>

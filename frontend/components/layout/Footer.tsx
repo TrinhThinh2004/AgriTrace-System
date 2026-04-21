@@ -3,7 +3,7 @@ import { Tractor, Mail,Sprout } from "lucide-react";
 import { FaFacebook, FaTwitter, FaGithub } from "react-icons/fa";
 const productLinks = [
   { href: "/#features", label: "Tính năng" },
-  { href: "/trace/AGT-2024-001", label: "Tra cứu QR" },
+  { href: "/trace/BATCH-RAU-2025-001", label: "Tra cứu QR" },
   { href: "/#pricing", label: "Bảng giá" },
   { href: "/#roles", label: "Vai trò" },
 ];

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useCreateFarm } from "@/hooks/use-farms";
+import { useUploadAsset } from "@/hooks/use-media";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,6 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
+import {
+  ImagesPickerPreview,
+  type PickedFile,
+} from "@/components/media/ImagesPickerPreview";
 
 const INITIAL_FORM = {
   name: "",
@@ -31,7 +36,14 @@ const INITIAL_FORM = {
 export function CreateFarmDialog() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
+  const [images, setImages] = useState<PickedFile[]>([]);
   const createFarm = useCreateFarm();
+  const uploadAsset = useUploadAsset();
+
+  const resetImages = () => {
+    images.forEach((i) => URL.revokeObjectURL(i.previewUrl));
+    setImages([]);
+  };
 
   const handleSubmit = async () => {
     if (!form.name.trim()) {
@@ -39,15 +51,36 @@ export function CreateFarmDialog() {
       return;
     }
     try {
-      await createFarm.mutateAsync({
+      const farm = await createFarm.mutateAsync({
         name: form.name,
         address: form.address || undefined,
         area_hectares: form.area_hectares || undefined,
         certification_status: form.certification_status,
       });
+
+      if (images.length > 0) {
+        let uploaded = 0;
+        for (const item of images) {
+          try {
+            await uploadAsset.mutateAsync({
+              file: item.file,
+              ref_type: "FARM_PHOTO",
+              ref_id: farm.id,
+            });
+            uploaded++;
+          } catch (e: any) {
+            toast.error(`Upload ${item.file.name} thất bại`, {
+              description: e.message,
+            });
+          }
+        }
+        if (uploaded > 0) toast.success(`Đã tải lên ${uploaded} ảnh`);
+      }
+
       toast.success("Thêm trang trại thành công");
       setOpen(false);
       setForm(INITIAL_FORM);
+      resetImages();
     } catch (e: any) {
       toast.error("Lỗi thêm trang trại", { description: e.message });
     }
@@ -56,14 +89,22 @@ export function CreateFarmDialog() {
   const set = (key: keyof typeof INITIAL_FORM, value: string) =>
     setForm((p) => ({ ...p, [key]: value }));
 
+  const busy = createFarm.isPending || uploadAsset.isPending;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) resetImages();
+        setOpen(o);
+      }}
+    >
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-1" /> Thêm trang trại
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Thêm trang trại mới</DialogTitle>
         </DialogHeader>
@@ -99,8 +140,13 @@ export function CreateFarmDialog() {
             </div>
             <div>
               <Label>Chứng nhận</Label>
-              <Select value={form.certification_status} onValueChange={(v) => set("certification_status", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.certification_status}
+                onValueChange={(v) => set("certification_status", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="NONE">Chưa có</SelectItem>
                   <SelectItem value="PENDING">Đang chờ</SelectItem>
@@ -112,8 +158,21 @@ export function CreateFarmDialog() {
             </div>
           </div>
 
-          <Button className="w-full" onClick={handleSubmit} disabled={createFarm.isPending}>
-            {createFarm.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+          <div className="space-y-1.5">
+            <Label>Ảnh trang trại</Label>
+            <ImagesPickerPreview
+              value={images}
+              onChange={setImages}
+              disabled={busy}
+            />
+          </div>
+
+          <Button
+            className="w-full"
+            onClick={handleSubmit}
+            disabled={busy}
+          >
+            {busy && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
             Lưu trang trại
           </Button>
         </div>

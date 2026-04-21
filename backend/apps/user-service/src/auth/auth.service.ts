@@ -163,6 +163,7 @@ export class AuthService {
   async listUsers({ role, page = 1, limit = 50 }: { role?: string; page?: number; limit?: number }) {
     const [users, total] = await this.userRepo.findAndCount({
       where: role ? { role: role as Role } : {},
+      relations: { profile: true },
       skip: (page - 1) * limit,
       take: limit,
       order: { created_at: 'DESC' },

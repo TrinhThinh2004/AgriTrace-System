@@ -27,6 +27,7 @@ import type { Farm } from "@/lib/api/product";
 import { CreateFarmDialog } from "@/components/CreateFarmDialog";
 import { ImageUploader } from "@/components/media/ImageUploader";
 import { AssetGallery } from "@/components/media/AssetGallery";
+import { AssetThumb } from "@/components/media/AssetThumb";
 
 const certLabel: Record<string, string> = {
   NONE: "Chưa có",
@@ -124,6 +125,7 @@ export default function FarmsManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-14">Ảnh</TableHead>
                   <TableHead>Tên</TableHead>
                   <TableHead>Vị trí</TableHead>
                   <TableHead>Diện tích</TableHead>
@@ -135,6 +137,9 @@ export default function FarmsManagement() {
               <TableBody>
                 {filtered.map((f) => (
                   <TableRow key={f.id}>
+                    <TableCell>
+                      <AssetThumb refType="FARM_PHOTO" refId={f.id} size={40} />
+                    </TableCell>
                     <TableCell className="font-medium">{f.name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{f.address}</TableCell>
                     <TableCell className="text-sm">{f.area_hectares ? `${f.area_hectares} ha` : "—"}</TableCell>
@@ -162,7 +167,7 @@ export default function FarmsManagement() {
                 ))}
                 {filtered.length === 0 && !isLoading && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Không tìm thấy trang trại
                     </TableCell>
                   </TableRow>

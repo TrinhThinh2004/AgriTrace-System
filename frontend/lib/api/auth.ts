@@ -18,6 +18,14 @@ export interface AuthResponse {
   user: BeUser;
 }
 
+export interface UpdateProfileBody {
+  full_name?: string;
+  phone?: string;
+  avatar_url?: string;
+  address?: string;
+  bio?: string;
+}
+
 export const authApi = {
   login: (body: LoginBody) =>
     apiFetch<AuthResponse>("/auth/login", {
@@ -46,4 +54,10 @@ export const authApi = {
     }),
 
   profile: () => apiFetch<BeUser>("/auth/profile"),
+
+  updateProfile: (body: UpdateProfileBody) =>
+    apiFetch<BeUser>("/auth/profile", {
+      method: "PATCH",
+      body,
+    }),
 };

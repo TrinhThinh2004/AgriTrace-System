@@ -33,14 +33,7 @@ export function useUploadAsset() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (params: UploadAssetParams) => mediaApi.upload(params),
-    onSuccess: (_asset, vars) => {
-      qc.invalidateQueries({
-        queryKey: [
-          "assets",
-          { ref_type: vars.ref_type, ref_id: vars.ref_id },
-        ],
-      });
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assets"] }),
   });
 }
 

@@ -1,5 +1,6 @@
 "use client";
-import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut, UserCog } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSidebar } from "./SidebarContext";
+import { ProfileDialog } from "@/components/profile/ProfileDialog";
 
 const breadcrumbMap: Record<string, string> = {
   "/dashboard": "Trang chủ",
@@ -29,6 +31,7 @@ export function AppHeader() {
   const pathname = usePathname() || "";
   const pageName = breadcrumbMap[pathname] || "Trang";
   const isBatchDetail = pathname.startsWith("/batch/");
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-4">
@@ -83,6 +86,10 @@ export function AppHeader() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setProfileOpen(true)} className="cursor-pointer">
+                <UserCog className="mr-2 h-4 w-4" />
+                Thông tin cá nhân
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 Đăng xuất
@@ -91,6 +98,7 @@ export function AppHeader() {
           </DropdownMenu>
         )}
       </div>
+      <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </header>
   );
 }
