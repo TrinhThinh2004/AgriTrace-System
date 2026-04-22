@@ -56,6 +56,13 @@ export class GatewayJwtKeyService implements OnModuleInit {
       if (key.status === 'retired') {
         throw new UnauthorizedException('JWT key đã hết hạn');
       }
+      // Key retiring nhưng đã qua retired_at → coi như hết hạn
+      if (key.status === 'retiring' && key.retired_at) {
+        const retiredAt = new Date(key.retired_at).getTime();
+        if (retiredAt > 0 && retiredAt < Date.now()) {
+          throw new UnauthorizedException('JWT key đã hết hạn');
+        }
+      }
       this.cache.set(kid, { secret: key.secret, exp: Date.now() + this.CACHE_TTL_MS });
       return key.secret;
     } catch (err) {

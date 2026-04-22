@@ -61,4 +61,10 @@ export class TokenRevocationClient implements OnModuleInit {
       this.logger.warn(`revokeAccessToken(${jti}) lỗi: ${(err as Error).message}`);
     }
   }
+
+  // Mark jti = revoked trong cache ngay (khi server đã revoke qua path khác, VD Logout gRPC)
+  markRevokedLocally(jti: string) {
+    if (!jti) return;
+    this.cache.set(jti, { revoked: true, exp: Date.now() + this.CACHE_TTL_MS });
+  }
 }

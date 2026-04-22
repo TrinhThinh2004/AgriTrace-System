@@ -62,6 +62,8 @@ message RefreshTokensRequest {
 
 message LogoutRequest {
   string user_id = 1;
+  string jti     = 2;  // để blacklist access token
+  int64  exp     = 3;  // unix seconds
 }
 
 message AuthResponse {

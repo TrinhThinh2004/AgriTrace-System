@@ -4,6 +4,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { TokenRevocationClient } from './token-revocation.client';
 
 // Định nghĩa interface cho gRPC client của User Service(phải đồng bộ với user.proto)
 interface UserServiceGrpc {
@@ -45,6 +46,7 @@ export class AuthService implements OnModuleInit {
   constructor(
     @Inject('USER_SERVICE')
     private readonly client: ClientGrpc,
+    private readonly revocationClient: TokenRevocationClient,
   ) {}
 
   onModuleInit() {
@@ -83,9 +85,12 @@ export class AuthService implements OnModuleInit {
   }
 
   async logout(userId: string, jti?: string, exp?: number) {
-    return firstValueFrom(
+    const result = await firstValueFrom(
       this.userService.logout({ user_id: userId, jti, exp }),
     );
+    // user-service đã insert jti vào DB; invalidate cache gateway ngay
+    if (jti) this.revocationClient.markRevokedLocally(jti);
+    return result;
   }
 
   async getProfile(userId: string) {
