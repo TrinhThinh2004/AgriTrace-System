@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -9,6 +9,9 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { GatewayJwtKeyService } from './gateway-jwt-key.service';
+import { TokenRevocationClient } from './token-revocation.client';
+import { AdminJwtKeyController } from './admin-jwt-key.controller';
 
 @Module({
   imports: [
@@ -35,8 +38,21 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
       },
     ]),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
-  exports: [AuthService],
+  controllers: [AuthController, AdminJwtKeyController],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    GatewayJwtKeyService,
+    TokenRevocationClient,
+  ],
+  exports: [AuthService, GatewayJwtKeyService, TokenRevocationClient],
 })
-export class AuthModule {}
+export class AuthModule implements OnApplicationBootstrap {
+  constructor(private readonly jwtKeyService: GatewayJwtKeyService) {}
+
+  async onApplicationBootstrap() {
+    // Preload toàn bộ key active + retiring để tránh miss lần đầu
+    await this.jwtKeyService.warmup();
+  }
+}

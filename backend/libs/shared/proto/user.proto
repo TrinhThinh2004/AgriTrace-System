@@ -31,6 +31,15 @@ service UserService {
   // Admin Key Management RPCs
   rpc ListAllKeys    (ListAllKeysRequest)    returns (ListAllKeysResponse);
   rpc AdminRevokeKey (AdminRevokeKeyRequest) returns (MessageResponse);
+
+  // JWT Key Ring RPCs (secret rotation)
+  rpc RotateJwtKey       (RotateJwtKeyRequest)       returns (JwtKeyResponse);
+  rpc GetJwtKey          (GetJwtKeyRequest)          returns (JwtKeyResponse);
+  rpc ListActiveJwtKeys  (ListActiveJwtKeysRequest)  returns (ListJwtKeysResponse);
+
+  // Access Token Blacklist RPCs
+  rpc RevokeAccessToken    (RevokeAccessTokenRequest)    returns (MessageResponse);
+  rpc IsAccessTokenRevoked (IsAccessTokenRevokedRequest) returns (BoolResponse);
 }
 
 // ── Auth Messages ─────────────────────────────────────────────────
@@ -217,4 +226,46 @@ message ListAllKeysResponse {
 
 message AdminRevokeKeyRequest {
   string key_id = 1;
+}
+
+// ── JWT Key Ring Messages (secret rotation) ──────────────────────
+message RotateJwtKeyRequest {
+  string purpose = 1;  // "access" | "refresh"
+}
+
+message GetJwtKeyRequest {
+  string kid = 1;
+}
+
+message ListActiveJwtKeysRequest {
+  string purpose = 1;  // optional — empty = all purposes
+}
+
+message JwtKeyResponse {
+  string kid         = 1;
+  string purpose     = 2;  // "access" | "refresh"
+  string secret      = 3;
+  string algorithm   = 4;  // "HS256"
+  string status      = 5;  // "active" | "retiring" | "retired"
+  string created_at  = 6;
+  string retired_at  = 7;
+}
+
+message ListJwtKeysResponse {
+  repeated JwtKeyResponse items = 1;
+}
+
+// ── Access Token Blacklist Messages ───────────────────────────────
+message RevokeAccessTokenRequest {
+  string jti        = 1;
+  string user_id    = 2;
+  int64  expires_at = 3;  // unix seconds (jwt `exp`)
+}
+
+message IsAccessTokenRevokedRequest {
+  string jti = 1;
+}
+
+message BoolResponse {
+  bool value = 1;
 }

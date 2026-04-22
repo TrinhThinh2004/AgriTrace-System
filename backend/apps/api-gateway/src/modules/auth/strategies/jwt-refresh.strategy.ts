@@ -1,20 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, StrategyOptionsWithRequest } from 'passport-jwt';
 import { Request } from 'express';
+import { decode as jwtDecode } from 'jsonwebtoken';
+import { GatewayJwtKeyService } from '../gateway-jwt-key.service';
 
-// Strategy này sẽ dùng để xác thực JWT Refresh Token trong route /auth/refresh
-// Refresh token được đọc từ httpOnly cookie (không phải Authorization header)
+// Strategy xác thực JWT Refresh Token. Refresh key được lookup bằng kid y như access.
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-  constructor(configService: ConfigService) {
+  constructor(private readonly keyService: GatewayJwtKeyService) {
     const options: StrategyOptionsWithRequest = {
       jwtFromRequest: (req: Request) => {
         return req?.cookies?.['refresh_token'] ?? null;
       },
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_REFRESH_SECRET') || 'fallback-refresh-secret',
+      secretOrKeyProvider: (
+        _request: unknown,
+        rawJwtToken: string,
+        done: (err: Error | null, secret?: string) => void,
+      ) => {
+        try {
+          const decoded = jwtDecode(rawJwtToken, { complete: true }) as
+            | { header?: { kid?: string } }
+            | null;
+          const kid = decoded?.header?.kid;
+          if (!kid) {
+            return done(new UnauthorizedException('Refresh token thiếu kid header'));
+          }
+          keyService
+            .getSecret(kid)
+            .then((secret) => done(null, secret))
+            .catch((err) => done(err as Error));
+        } catch (err) {
+          done(err as Error);
+        }
+      },
       passReqToCallback: true,
     };
     super(options);
@@ -24,9 +44,9 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     const refreshToken = req?.cookies?.['refresh_token'];
 
     return {
-      id: payload.sub,
+      id:    payload.sub,
       email: payload.email,
-      role: payload.role,
+      role:  payload.role,
       refreshToken,
     };
   }

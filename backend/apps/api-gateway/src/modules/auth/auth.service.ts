@@ -24,7 +24,7 @@ interface UserServiceGrpc {
     refresh_token: string;
   }): Observable<any>;
 
-  logout(data: { user_id: string }): Observable<any>;
+  logout(data: { user_id: string; jti?: string; exp?: number }): Observable<any>;
 
   getProfile(data: { user_id: string }): Observable<any>;
 
@@ -82,9 +82,9 @@ export class AuthService implements OnModuleInit {
     );
   }
 
-  async logout(userId: string) {
+  async logout(userId: string, jti?: string, exp?: number) {
     return firstValueFrom(
-      this.userService.logout({ user_id: userId }),
+      this.userService.logout({ user_id: userId, jti, exp }),
     );
   }
 

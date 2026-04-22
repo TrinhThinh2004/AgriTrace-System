@@ -10,10 +10,13 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 
 import { User } from '../entities/user.entity';
 import { UserProfile } from '../entities/user-profile.entity';
 import { Role, UserStatus } from '@app/shared';
+import { JwtKeyService } from './jwt-key.service';
+import { TokenRevocationService } from './token-revocation.service';
 
 // Dto cho các request gRPC 
 export interface RegisterRequest {
@@ -44,6 +47,8 @@ export class AuthService {
 
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly jwtKeyService: JwtKeyService,
+    private readonly tokenRevocation: TokenRevocationService,
   ) {}
 
   // Register method 
@@ -127,9 +132,12 @@ export class AuthService {
     return tokens;
   }
 
-  // Logout method
-  async logout(userId: string) {
+  // Logout method — xoá refresh_token_hash + blacklist access token (jti)
+  async logout(userId: string, jti?: string, exp?: number) {
     await this.userRepo.update(userId, { refresh_token_hash: undefined });
+    if (jti && exp) {
+      await this.tokenRevocation.revoke(jti, userId, new Date(exp * 1000));
+    }
     return { message: 'Đăng xuất thành công' };
   }
 
@@ -252,9 +260,21 @@ export class AuthService {
 //  Validate token method (dành cho API Gateway khi nhận JWT từ client)
   async validateToken(token: string) {
     try {
+      const decoded = this.jwtService.decode(token, { complete: true }) as
+        | { header?: { kid?: string } }
+        | null;
+      const kid = decoded?.header?.kid;
+      const key = await this.jwtKeyService.verifyingKey('access', kid);
+
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+        secret: key.secret,
       });
+
+      // Check blacklist
+      if (payload.jti && (await this.tokenRevocation.isRevoked(payload.jti))) {
+        return { valid: false, user_id: '', email: '', role: '' };
+      }
+
       return {
         valid:   true,
         user_id: payload.sub   as string,
@@ -266,21 +286,31 @@ export class AuthService {
     }
   }
 
-  // Helper methods
+  // Hàm rotation
   private async generateTokens(user: User) {
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const basePayload = { sub: user.id, email: user.email, role: user.role };
 
     const accessExp  = this.configService.get<string>('JWT_ACCESS_EXPIRATION')  || '15m';
     const refreshExp = this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d';
 
+    const accessKey  = await this.jwtKeyService.signingKey('access');
+    const refreshKey = await this.jwtKeyService.signingKey('refresh');
+
+    const accessJti = randomUUID();
+
     const [access_token, refresh_token] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-        expiresIn: accessExp as any,
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      this.jwtService.signAsync(
+        { ...basePayload, jti: accessJti },
+        {
+          secret: accessKey.secret,
+          expiresIn: accessExp as any,
+          keyid: accessKey.kid,
+        },
+      ),
+      this.jwtService.signAsync(basePayload, {
+        secret: refreshKey.secret,
         expiresIn: refreshExp as any,
+        keyid: refreshKey.kid,
       }),
     ]);
 
