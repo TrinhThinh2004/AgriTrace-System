@@ -79,15 +79,15 @@ export class AuthController {
     return { access_token: result.access_token };
   }
 
-  // post /auth/logout
+  // post /auth/logout — vô hiệu hoá access token (jti blacklist) + xoá refresh hash
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
-    @CurrentUser('id') userId: string,
+    @CurrentUser() user: { id: string; jti?: string; exp?: number },
     @Res({ passthrough: true }) res: Response,
   ) {
     this.clearRefreshCookie(res);
-    return this.authService.logout(userId);
+    return this.authService.logout(user.id, user.jti, user.exp);
   }
 
   // get /auth/profile

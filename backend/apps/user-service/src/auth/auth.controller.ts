@@ -1,6 +1,21 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
+import { JwtKeyService } from './jwt-key.service';
+import { TokenRevocationService } from './token-revocation.service';
+import { JwtKey, JwtKeyPurpose } from '../entities/jwt-key.entity';
+
+function toJwtKeyResponse(k: JwtKey) {
+  return {
+    kid:        k.kid,
+    purpose:    k.purpose,
+    secret:     k.secret,
+    algorithm:  k.algorithm,
+    status:     k.status,
+    created_at: k.created_at?.toISOString?.() ?? '',
+    retired_at: k.retired_at?.toISOString?.() ?? '',
+  };
+}
 
 
 type UserLike = {
@@ -33,7 +48,11 @@ function toUserResponse(user: UserLike) {
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtKeyService: JwtKeyService,
+    private readonly tokenRevocation: TokenRevocationService,
+  ) {}
 
   // rpc Register
   @GrpcMethod('UserService', 'Register')
@@ -76,10 +95,10 @@ export class AuthController {
     });
   }
 
-  // rpc Logout
+  // rpc Logout — nhận thêm jti + exp để blacklist access token
   @GrpcMethod('UserService', 'Logout')
-  async logout(data: { user_id: string }) {
-    return this.authService.logout(data.user_id);
+  async logout(data: { user_id: string; jti?: string; exp?: number }) {
+    return this.authService.logout(data.user_id, data.jti, data.exp);
   }
 
   // rpc GetProfile
@@ -140,6 +159,43 @@ export class AuthController {
   @GrpcMethod('UserService', 'ValidateToken')
   async validateToken(data: { token: string }) {
     return this.authService.validateToken(data.token);
+  }
+
+  // ── JWT Key Ring RPCs ─────────────────────────────────────────────
+  @GrpcMethod('UserService', 'RotateJwtKey')
+  async rotateJwtKey(data: { purpose: string }) {
+    const key = await this.jwtKeyService.rotate(data.purpose as JwtKeyPurpose);
+    return toJwtKeyResponse(key);
+  }
+
+  @GrpcMethod('UserService', 'GetJwtKey')
+  async getJwtKey(data: { kid: string }) {
+    const key = await this.jwtKeyService.findByKid(data.kid);
+    return toJwtKeyResponse(key);
+  }
+
+  @GrpcMethod('UserService', 'ListActiveJwtKeys')
+  async listActiveJwtKeys(data: { purpose?: string }) {
+    const purpose = (data.purpose || undefined) as JwtKeyPurpose | undefined;
+    const keys = await this.jwtKeyService.listActive(purpose);
+    return { items: keys.map(toJwtKeyResponse) };
+  }
+
+  // ── Access Token Blacklist RPCs ───────────────────────────────────
+  @GrpcMethod('UserService', 'RevokeAccessToken')
+  async revokeAccessToken(data: { jti: string; user_id: string; expires_at: number }) {
+    await this.tokenRevocation.revoke(
+      data.jti,
+      data.user_id,
+      new Date(Number(data.expires_at) * 1000),
+    );
+    return { message: 'Đã thu hồi access token' };
+  }
+
+  @GrpcMethod('UserService', 'IsAccessTokenRevoked')
+  async isAccessTokenRevoked(data: { jti: string }) {
+    const value = await this.tokenRevocation.isRevoked(data.jti);
+    return { value };
   }
 }
 
