@@ -56,9 +56,9 @@
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Trang nông dân</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Trang nông dân</h1>
             <p className="text-sm text-muted-foreground">Quản lý các lô sản xuất</p>
           </div>
           <CreateBatchDialog />
@@ -73,12 +73,12 @@
         {/* Danh sách trang trại */}
         {farms.length > 0 && (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3">
               <CardTitle className="text-base">
                 <Building2 className="h-4 w-4 inline mr-2" />
                 Trang trại của tôi ({farms.length})
               </CardTitle>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <CreateFarmDialog />
                 <Button variant="outline" size="sm" onClick={() => router.push("/farms")}>
                   Xem tất cả <ArrowRight className="h-3 w-3 ml-1" />
@@ -121,13 +121,13 @@
           </Card>
         )}
 
-        <div className="flex gap-3">
-          <div className="relative flex-1 max-w-xs">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1 sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Tìm kiếm lô hàng..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Lọc" />
             </SelectTrigger>
             <SelectContent>

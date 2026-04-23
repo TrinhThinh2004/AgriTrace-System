@@ -458,16 +458,16 @@ export default function BatchDetail() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+      <div className="flex items-start gap-3">
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="shrink-0">
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold font-mono">{batch.batch_code}</h1>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-lg sm:text-xl font-bold font-mono break-all">{batch.batch_code}</h1>
             <StatusBadge status={batch.status} />
           </div>
-          <p className="text-sm text-muted-foreground">{batch.name} &middot; {farm?.name ?? "—"}</p>
+          <p className="text-sm text-muted-foreground truncate">{batch.name} &middot; {farm?.name ?? "—"}</p>
         </div>
       </div>
 
@@ -492,18 +492,18 @@ export default function BatchDetail() {
         {/* Tabs */}
         <div className="lg:col-span-3">
           <Tabs defaultValue="overview">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-              <TabsTrigger value="logs">Nhật ký</TabsTrigger>
-              <TabsTrigger value="inspections">Kiểm định</TabsTrigger>
-              <TabsTrigger value="harvest">Thu hoạch</TabsTrigger>
-              <TabsTrigger value="qr">QR Code</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5 h-auto text-xs sm:text-sm">
+              <TabsTrigger value="overview" className="px-1 sm:px-3">Tổng quan</TabsTrigger>
+              <TabsTrigger value="logs" className="px-1 sm:px-3">Nhật ký</TabsTrigger>
+              <TabsTrigger value="inspections" className="px-1 sm:px-3">Kiểm định</TabsTrigger>
+              <TabsTrigger value="harvest" className="px-1 sm:px-3">Thu hoạch</TabsTrigger>
+              <TabsTrigger value="qr" className="px-1 sm:px-3">QR Code</TabsTrigger>
             </TabsList>
 
             {/* ─── Tab: Tổng quan ─── */}
             <TabsContent value="overview">
               <Card>
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="p-4 sm:p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><Label>Loại cây trồng</Label><Input value={crop?.name ?? ""} readOnly /></div>
                     <div><Label>Ngày trồng</Label><Input value={formatDate(batch.planting_date)} readOnly /></div>
@@ -553,7 +553,7 @@ export default function BatchDetail() {
             {/* ─── Tab: Nhật ký canh tác ─── */}
             <TabsContent value="logs">
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle className="text-base">Nhật ký canh tác ({activityLogs.length})</CardTitle>
                   {(isFarmer || isAdmin) && (
                     <Dialog open={logDialogOpen} onOpenChange={setLogDialogOpen}>
@@ -631,8 +631,8 @@ export default function BatchDetail() {
                     <div className="space-y-3">
                       {activityLogs.map((log) => (
                         <div key={log.id} className="border rounded-lg p-4 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge variant="outline">{getActivityLabel(log.activity_type)}</Badge>
                               <span className="text-sm text-muted-foreground">{formatDate(log.performed_at)}</span>
                               {log.is_signed && (
@@ -677,7 +677,7 @@ export default function BatchDetail() {
             {/* ─── Tab: Kiểm định ─── */}
             <TabsContent value="inspections">
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle className="text-base">Kiểm định ({inspections.length})</CardTitle>
                   {((isInspector && batch.status === 'HARVESTED') || isAdmin) && (
                     <Dialog open={insDialogOpen} onOpenChange={setInsDialogOpen}>
@@ -747,8 +747,8 @@ export default function BatchDetail() {
                     <div className="space-y-3">
                       {inspections.map((ins) => (
                         <div key={ins.id} className="border rounded-lg p-4 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge variant="outline">{getInspectionTypeLabel(ins.inspection_type)}</Badge>
                               {getResultBadge(ins.result)}
                               {ins.conducted_at && <span className="text-sm text-muted-foreground">{formatDate(ins.conducted_at)}</span>}
@@ -789,7 +789,7 @@ export default function BatchDetail() {
             {/* ─── Tab: Thu hoạch ─── */}
             <TabsContent value="harvest">
               <Card>
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="p-4 sm:p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><Label>Ngày thu hoạch</Label><Input type="date" defaultValue={batch.actual_harvest_date ?? ""} readOnly={!isFarmer && !isAdmin} /></div>
                     <div><Label>Sản lượng ({batch.unit})</Label><Input defaultValue={batch.harvested_quantity ?? ""} readOnly={!isFarmer && !isAdmin} /></div>
@@ -804,7 +804,7 @@ export default function BatchDetail() {
             {/* ─── Tab: QR Code ─── */}
             <TabsContent value="qr">
               <Card>
-                <CardContent className="p-6 space-y-4">
+                <CardContent className="p-4 sm:p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><Label>Mã lô</Label><Input value={batch.batch_code} readOnly /></div>
                     <div><Label>Trạng thái</Label><Input value={batch.status} readOnly /></div>

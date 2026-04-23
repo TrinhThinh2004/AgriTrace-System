@@ -74,15 +74,15 @@ export default function AdminKeysPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Quản lý khóa số</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Quản lý khóa số</h1>
         <p className="text-sm text-muted-foreground">
           Xem và quản lý tất cả khóa số trong hệ thống
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative max-w-xs flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-xs sm:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Tìm theo tên, email, key ID..."
@@ -92,7 +92,7 @@ export default function AdminKeysPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[40]]">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -105,7 +105,7 @@ export default function AdminKeysPage() {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

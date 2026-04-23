@@ -31,7 +31,7 @@ export default function InspectorDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Kiểm định viên</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Kiểm định viên</h1>
         <p className="text-sm text-muted-foreground">Xem xét và chứng nhận các lô sản xuất</p>
       </div>
 
@@ -40,7 +40,7 @@ export default function InspectorDashboard() {
           <CardHeader>
             <CardTitle className="text-base">Chờ xem xét ({pendingBatches.length})</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

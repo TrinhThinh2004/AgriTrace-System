@@ -11,9 +11,9 @@ export default function Standards() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Quản lý tiêu chuẩn</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Quản lý tiêu chuẩn</h1>
           <p className="text-sm text-muted-foreground">Quản lý tiêu chuẩn chứng nhận nông nghiệp</p>
         </div>
         <Button onClick={() => toast.info("Thêm tiêu chuẩn", { description: "Mở biểu mẫu thêm tiêu chuẩn" })}>
@@ -22,7 +22,7 @@ export default function Standards() {
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

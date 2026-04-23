@@ -144,9 +144,9 @@ export default function CropCategories() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Loại cây trồng</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Loại cây trồng</h1>
           <p className="text-sm text-muted-foreground">Quản lý danh mục loại cây trồng</p>
         </div>
 
@@ -163,7 +163,7 @@ export default function CropCategories() {
               <Plus className="h-4 w-4 mr-1" /> Thêm loại cây
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Thêm loại cây trồng mới</DialogTitle>
             </DialogHeader>
@@ -208,13 +208,13 @@ export default function CropCategories() {
         </Dialog>
       </div>
 
-      <div className="relative max-w-xs">
+      <div className="relative w-full sm:max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Tìm kiếm loại cây..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -270,7 +270,7 @@ export default function CropCategories() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editCategory} onOpenChange={(open) => { if (!open) setEditCategory(null); }}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa loại cây trồng</DialogTitle>
           </DialogHeader>

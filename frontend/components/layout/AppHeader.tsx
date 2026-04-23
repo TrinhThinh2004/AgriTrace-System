@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Bell, ChevronRight, PanelLeftClose, PanelLeftOpen, LogOut, UserCog } from "lucide-react";
+import { Bell, ChevronRight, Menu, PanelLeftClose, PanelLeftOpen, LogOut, UserCog } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,39 +27,50 @@ const breadcrumbMap: Record<string, string> = {
 
 export function AppHeader() {
   const { user, logout } = useAuth();
-  const { collapsed, toggle } = useAppSidebar();
+  const { collapsed, toggle, setMobileOpen } = useAppSidebar();
   const pathname = usePathname() || "";
   const pageName = breadcrumbMap[pathname] || "Trang";
   const isBatchDetail = pathname.startsWith("/batch/");
   const [profileOpen, setProfileOpen] = useState(false);
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-4">
-      <div className="flex items-center gap-3">
+    <header className="flex h-14 items-center justify-between border-b bg-card px-3 sm:px-4 gap-2">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile: hamburger mở drawer */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileOpen(true)}
+          className="md:hidden h-8 w-8"
+          aria-label="Mở menu"
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+        {/* Desktop: collapse toggle */}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggle}
-          className="h-8 w-8"
+          className="hidden md:inline-flex h-8 w-8"
           aria-label={collapsed ? "Mở sidebar" : "Đóng sidebar"}
         >
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </Button>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <span>AgriTrace</span>
-          <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium">
+        <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+          <span className="hidden sm:inline">AgriTrace</span>
+          <ChevronRight className="hidden sm:inline h-3 w-3" />
+          <span className="text-foreground font-medium truncate">
             {isBatchDetail ? "Chi tiết lô hàng" : pageName}
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {user && (
-          <Badge variant="outline" className="text-xs capitalize border-primary/30 text-primary">
+          <Badge variant="outline" className="hidden sm:inline-flex text-xs capitalize border-primary/30 text-primary">
             {user.role}
           </Badge>
         )}
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative h-8 w-8">
           <Bell className="h-4 w-4" />
           <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-destructive text-[8px] text-destructive-foreground flex items-center justify-center">3</span>
         </Button>

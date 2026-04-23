@@ -70,9 +70,9 @@ export default function BatchesManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Quản lý lô hàng</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Quản lý lô hàng</h1>
           <p className="text-sm text-muted-foreground">
             Danh sách tất cả lô hàng trong hệ thống
           </p>
@@ -80,8 +80,8 @@ export default function BatchesManagement() {
         <CreateBatchDialog />
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Tìm kiếm mã lô, tên, trang trại..."
@@ -91,7 +91,7 @@ export default function BatchesManagement() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Lọc trạng thái" />
           </SelectTrigger>
           <SelectContent>
@@ -105,7 +105,7 @@ export default function BatchesManagement() {
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

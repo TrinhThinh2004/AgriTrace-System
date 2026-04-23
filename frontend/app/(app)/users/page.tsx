@@ -139,9 +139,9 @@ export default function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Quản lý người dùng</h1>
           <p className="text-sm text-muted-foreground">Quản lý người dùng và phân quyền</p>
         </div>
 
@@ -152,7 +152,7 @@ export default function UserManagement() {
               <Plus className="h-4 w-4 mr-1" /> Thêm người dùng
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Thêm người dùng mới</DialogTitle>
             </DialogHeader>
@@ -211,13 +211,13 @@ export default function UserManagement() {
         </Dialog>
       </div>
 
-      <div className="relative max-w-xs">
+      <div className="relative w-full sm:max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Tìm kiếm người dùng..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -285,7 +285,7 @@ export default function UserManagement() {
 
       {/* Edit User Dialog */}
       <Dialog open={!!editUser} onOpenChange={(open) => { if (!open) setEditUser(null); }}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa người dùng</DialogTitle>
           </DialogHeader>

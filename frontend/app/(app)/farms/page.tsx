@@ -110,21 +110,21 @@ export default function FarmsManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Quản lý trang trại</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Quản lý trang trại</h1>
           <p className="text-sm text-muted-foreground">Quản lý các trang trại đã đăng ký</p>
         </div>
         <CreateFarmDialog />
       </div>
 
-      <div className="relative max-w-xs">
+      <div className="relative w-full sm:max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Tìm kiếm trang trại..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -194,7 +194,7 @@ export default function FarmsManagement() {
 
       {/* Edit Farm Dialog */}
       <Dialog open={!!editFarm} onOpenChange={(open) => { if (!open) setEditFarm(null); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa trang trại</DialogTitle>
           </DialogHeader>
