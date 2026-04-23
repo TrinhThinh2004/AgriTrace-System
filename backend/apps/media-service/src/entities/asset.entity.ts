@@ -64,6 +64,10 @@ export class Asset {
   @Column({ type: 'varchar', length: 255, nullable: true })
   original_filename!: string | null;
 
+  // đánh dấu row được tạo bởi seed script — dùng để --fresh chỉ xóa seed, không đụng ảnh người dùng upload
+  @Column({ type: 'boolean', default: false })
+  is_seed!: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date;
 

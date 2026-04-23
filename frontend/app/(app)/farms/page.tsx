@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Search, Pencil, Trash2, Loader2 } from "lucide-react";
 import { useFarms, useUpdateFarm, useDeleteFarm } from "@/hooks/use-farms";
+import { useUsers } from "@/hooks/use-users";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Farm } from "@/lib/api/product";
@@ -51,6 +53,12 @@ export default function FarmsManagement() {
   const { data, isLoading } = useFarms();
   const updateFarm = useUpdateFarm();
   const deleteFarm = useDeleteFarm();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const { data: usersData } = useUsers(isAdmin ? { limit: 100 } : undefined);
+  const userMap = new Map(
+    (usersData?.items ?? []).map((u) => [u.id, u.full_name]),
+  );
 
   const farms = data?.items ?? [];
   const filtered = farms.filter(
@@ -127,6 +135,7 @@ export default function FarmsManagement() {
                 <TableRow>
                   <TableHead className="w-14">Ảnh</TableHead>
                   <TableHead>Tên</TableHead>
+                  {isAdmin && <TableHead>Chủ sở hữu</TableHead>}
                   <TableHead>Vị trí</TableHead>
                   <TableHead>Diện tích</TableHead>
                   <TableHead>Chứng nhận</TableHead>
@@ -141,6 +150,11 @@ export default function FarmsManagement() {
                       <AssetThumb refType="FARM_PHOTO" refId={f.id} size={40} />
                     </TableCell>
                     <TableCell className="font-medium">{f.name}</TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-sm">
+                        {userMap.get(f.owner_id) ?? "—"}
+                      </TableCell>
+                    )}
                     <TableCell className="text-sm text-muted-foreground">{f.address}</TableCell>
                     <TableCell className="text-sm">{f.area_hectares ? `${f.area_hectares} ha` : "—"}</TableCell>
                     <TableCell>
@@ -167,7 +181,7 @@ export default function FarmsManagement() {
                 ))}
                 {filtered.length === 0 && !isLoading && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-muted-foreground">
                       Không tìm thấy trang trại
                     </TableCell>
                   </TableRow>

@@ -52,7 +52,7 @@ import {
   downloadPemFile,
   hasStoredKey,
 } from "@/lib/crypto";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 function formatDate(d: string | undefined | null) {
   if (!d) return "—";
@@ -89,17 +89,22 @@ export default function SettingsPage() {
 
   // Track which keys are stored in IndexedDB
   const [storedKeyIds, setStoredKeyIds] = useState<Set<string>>(new Set());
-  const keys = keysData?.keys ?? [];
+  const keys = useMemo(() => keysData?.keys ?? [], [keysData?.keys]);
+  const keyIdsKey = keys.map((k) => k.key_id).join(",");
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       const ids = new Set<string>();
       for (const k of keys) {
         if (await hasStoredKey(k.key_id)) ids.add(k.key_id);
       }
-      setStoredKeyIds(ids);
+      if (!cancelled) setStoredKeyIds(ids);
     })();
-  }, [keys]);
+    return () => {
+      cancelled = true;
+    };
+  }, [keyIdsKey]);
 
   const handleGenerate = async () => {
     try {

@@ -63,6 +63,13 @@ const DB_CONFIGS = {
     pass: 'TRACE_DB_PASS',
     name: 'TRACE_DB_NAME',
   },
+  media: {
+    host: 'MEDIA_DB_HOST',
+    port: 'MEDIA_DB_PORT',
+    user: 'MEDIA_DB_USER',
+    pass: 'MEDIA_DB_PASS',
+    name: 'MEDIA_DB_NAME',
+  },
 };
 
 export function createDataSource(

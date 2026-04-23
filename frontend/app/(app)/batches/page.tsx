@@ -12,6 +12,8 @@ import {
 import { Search, Loader2 } from "lucide-react";
 import { useBatches } from "@/hooks/use-batches";
 import { useFarms } from "@/hooks/use-farms";
+import { useUsers } from "@/hooks/use-users";
+import { useAuth } from "@/contexts/AuthContext";
 import { StatusBadge } from "@/components/StatusBadge";
 import { CreateBatchDialog } from "@/components/CreateBatchDialog";
 import { useState } from "react";
@@ -34,11 +36,22 @@ export default function BatchesManagement() {
 
   const { data: batchData, isLoading } = useBatches();
   const { data: farmData } = useFarms();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const { data: usersData } = useUsers(isAdmin ? { limit: 100 } : undefined);
 
   const batches = batchData?.items ?? [];
   const farms = farmData?.items ?? [];
 
   const farmMap = new Map(farms.map((f) => [f.id, f.name]));
+  const farmOwnerMap = new Map(farms.map((f) => [f.id, f.owner_id]));
+  const userMap = new Map(
+    (usersData?.items ?? []).map((u) => [u.id, u.full_name]),
+  );
+  const ownerNameFor = (b: { created_by?: string; farm_id: string }) => {
+    const ownerId = b.created_by || farmOwnerMap.get(b.farm_id);
+    return ownerId ? userMap.get(ownerId) ?? "—" : "—";
+  };
 
   const filtered = batches.filter((b) => {
     if (statusFilter !== "all" && b.status !== statusFilter) return false;
@@ -104,6 +117,7 @@ export default function BatchesManagement() {
                   <TableHead>Mã lô</TableHead>
                   <TableHead>Tên</TableHead>
                   <TableHead>Trang trại</TableHead>
+                  {isAdmin && <TableHead>Nông dân</TableHead>}
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Ngày trồng</TableHead>
                   <TableHead>Ngày tạo</TableHead>
@@ -123,6 +137,11 @@ export default function BatchesManagement() {
                     <TableCell className="text-sm text-muted-foreground">
                       {farmMap.get(b.farm_id) ?? "—"}
                     </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-sm">
+                        {ownerNameFor(b)}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <StatusBadge status={b.status} />
                     </TableCell>
@@ -141,7 +160,7 @@ export default function BatchesManagement() {
                 {filtered.length === 0 && !isLoading && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={isAdmin ? 7 : 6}
                       className="text-center py-8 text-muted-foreground"
                     >
                       Không tìm thấy lô hàng

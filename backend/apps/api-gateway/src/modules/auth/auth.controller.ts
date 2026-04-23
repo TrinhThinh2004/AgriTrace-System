@@ -10,11 +10,14 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
-
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, UpdateProfileDto } from './dto';
 import { CurrentUser, Public } from '../../common/decorators';
+
+// Limit chặt cho endpoint nhạy cảm (register/login) để giảm thiểu rủi ro brute-force.
+// 100 request mỗi 60 giây cho mỗi IP.
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 ngày
@@ -39,6 +42,7 @@ export class AuthController {
 
   // post /auth/register
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
@@ -51,6 +55,7 @@ export class AuthController {
 
   // post /auth/login
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(

@@ -3,11 +3,15 @@ import {
   Get,
   Param,
   Inject,
+  Logger,
   OnModuleInit,
   NotFoundException,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
 import { Observable, firstValueFrom } from 'rxjs';
+import type Redis from 'ioredis';
+import { REDIS_CLIENT } from '@app/shared';
 import { Public } from '../../common/decorators';
 
 interface ProductServiceGrpc {
@@ -23,13 +27,23 @@ interface TraceServiceGrpc {
 
 @Controller('public/trace')
 export class PublicTraceController implements OnModuleInit {
+  private readonly logger = new Logger(PublicTraceController.name);
   private product!: ProductServiceGrpc;
   private trace!: TraceServiceGrpc;
+  private readonly cacheTtl: number;
 
+  // Inject cả 2 client gRPC và Redis client qua Dependency Injection
   constructor(
     @Inject('PRODUCT_SERVICE') private readonly productClient: ClientGrpc,
     @Inject('TRACE_SERVICE') private readonly traceClient: ClientGrpc,
-  ) {}
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    config: ConfigService,
+  ) {
+    this.cacheTtl = parseInt(
+      config.get<string>('QR_CACHE_TTL_SEC') ?? '60',
+      10,
+    );
+  }
 
   onModuleInit() {
     this.product =
@@ -38,9 +52,22 @@ export class PublicTraceController implements OnModuleInit {
       this.traceClient.getService<TraceServiceGrpc>('TraceService');
   }
 
+  private cacheKey(batchCode: string): string {
+    return `qr:trace:${batchCode}`;
+  }
+
   @Public()
   @Get(':batchCode')
   async getTrace(@Param('batchCode') batchCode: string) {
+    // 0. Cache hit?
+    const key = this.cacheKey(batchCode);
+    try {
+      const cached = await this.redis.get(key);
+      if (cached) return JSON.parse(cached);
+    } catch (err) {
+      this.logger.warn(`Redis GET lỗi (bypass cache): ${(err as Error).message}`);
+    }
+
     // 1. Lấy batch theo batch_code
     let batch: any;
     try {
@@ -48,6 +75,7 @@ export class PublicTraceController implements OnModuleInit {
         this.product.getBatchByCode({ batch_code: batchCode }),
       );
     } catch {
+      // Không cache miss để tránh poison cache khi batch chưa tồn tại
       throw new NotFoundException(
         `Không tìm thấy lô hàng với mã "${batchCode}"`,
       );
@@ -69,7 +97,7 @@ export class PublicTraceController implements OnModuleInit {
       ).catch(() => ({ inspections: [] })),
     ]);
 
-    return {
+    const payload = {
       batch: {
         id: batch.id,
         batch_code: batch.batch_code,
@@ -122,5 +150,14 @@ export class PublicTraceController implements OnModuleInit {
         signed_at: ins.signed_at,
       })),
     };
+
+    // Cache lại (best-effort, không fail request nếu Redis lỗi)
+    try {
+      await this.redis.set(key, JSON.stringify(payload), 'EX', this.cacheTtl);
+    } catch (err) {
+      this.logger.warn(`Redis SET lỗi: ${(err as Error).message}`);
+    }
+
+    return payload;
   }
 }

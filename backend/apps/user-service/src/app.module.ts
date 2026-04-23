@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RedisModule } from '@app/shared';
 import { AuthModule } from './auth/auth.module';
 import { KeyModule } from './keys/key.module';
 import { HealthController } from './health.controller';
@@ -8,6 +9,7 @@ import { HealthController } from './health.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    RedisModule,
 
     // Config TypeORM connection
     TypeOrmModule.forRootAsync({
