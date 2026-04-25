@@ -3,10 +3,12 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Farm } from '../entities/farm.entity';
+import { Batch } from '../entities/batch.entity';
 import { CertificationStatus, FarmStatus, Role } from '@app/shared';
 
 interface CreateFarmInput {
@@ -52,6 +54,8 @@ export class FarmService {
   constructor(
     @InjectRepository(Farm)
     private readonly repo: Repository<Farm>,
+    @InjectRepository(Batch)
+    private readonly batchRepo: Repository<Batch>,
   ) {}
 
   async create(input: CreateFarmInput, caller: CallerCtx) {
@@ -125,9 +129,18 @@ export class FarmService {
 
     return this.repo.save(farm);
   }
-  // Method delete 
+  // Method delete — chặn nếu còn batch (chưa soft-delete) đang tham chiếu
   async delete(id: string) {
     const farm = await this.findById(id);
+
+    const inUse = await this.batchRepo.count({ where: { farm_id: id } });
+    if (inUse > 0) {
+      throw new ConflictException(
+        `Không thể xóa "${farm.name}": đang có ${inUse} lô hàng thuộc trang trại này. ` +
+          `Hãy xóa hoặc chuyển các lô hàng trước khi xóa trang trại.`,
+      );
+    }
+
     await this.repo.softRemove(farm);
   }
   // Method findById

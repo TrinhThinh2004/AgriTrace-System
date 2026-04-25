@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { CropCategory } from '../entities/crop-category.entity';
+import { Batch } from '../entities/batch.entity';
 import { CropCategoryStatus } from '@app/shared';
 
 interface ListParams {
@@ -20,6 +21,8 @@ export class CropCategoryService {
   constructor(
     @InjectRepository(CropCategory)
     private readonly repo: Repository<CropCategory>,
+    @InjectRepository(Batch)
+    private readonly batchRepo: Repository<Batch>,
   ) {}
   // Method create 
   async create(data: { name: string; description?: string }) {
@@ -62,9 +65,20 @@ export class CropCategoryService {
 
     return this.repo.save(cc);
   }
-  // Method delete 
+  // Method delete — chặn nếu còn batch (chưa soft-delete) đang tham chiếu
   async delete(id: string) {
     const cc = await this.findById(id);
+
+    const inUse = await this.batchRepo.count({
+      where: { crop_category_id: id },
+    });
+    if (inUse > 0) {
+      throw new ConflictException(
+        `Không thể xóa "${cc.name}": đang được ${inUse} lô hàng sử dụng. ` +
+          `Hãy chuyển các lô hàng sang loại cây khác trước khi xóa.`,
+      );
+    }
+
     await this.repo.softRemove(cc);
   }
   // Method findById

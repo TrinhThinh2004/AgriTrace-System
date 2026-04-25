@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CropCategory } from '../entities/crop-category.entity';
+import { Batch } from '../entities/batch.entity';
 import { CropCategoryService } from './crop-category.service';
 import { CropCategoryController } from './crop-category.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CropCategory])],
+  imports: [TypeOrmModule.forFeature([CropCategory, Batch])],
   controllers: [CropCategoryController],
   providers: [CropCategoryService],
 })

@@ -148,63 +148,65 @@ export class BatchService {
     return this.batchRepo.save(batch);
   }
   // Method update (chỉ update được một số trường, không được phép update farm_id, crop_category_id, batch_code)
+  // Dùng repo.update(patch) thay vì save(entity) để tránh TypeORM "tự dọn" FK
+  // khi crop_category đã bị soft-delete (relation = null → ghi đè crop_category_id = null).
   async update(id: string, input: UpdateBatchInput) {
     const batch = await this.findById(id);
+    const patch: Partial<Batch> = {};
 
     if (input.name !== undefined) {
       if (!input.name.trim())
         throw new BadRequestException('Tên batch không được để trống');
-      batch.name = input.name.trim();
+      patch.name = input.name.trim();
     }
 
-    // kiểm tra ngày tháng nếu có thay đổi
     if (input.planting_date !== undefined)
-      batch.planting_date = parseDate(input.planting_date) as any;
+      patch.planting_date = parseDate(input.planting_date) as any;
     if (input.expected_harvest_date !== undefined)
-      batch.expected_harvest_date = parseDate(input.expected_harvest_date) as any;
+      patch.expected_harvest_date = parseDate(input.expected_harvest_date) as any;
     if (input.actual_harvest_date !== undefined)
-      batch.actual_harvest_date = parseDate(input.actual_harvest_date) as any;
+      patch.actual_harvest_date = parseDate(input.actual_harvest_date) as any;
 
-    // Kiểm tra tính hợp lệ của ngày tháng nếu có thay đổi
-    if (
-      batch.planting_date &&
-      batch.expected_harvest_date &&
-      new Date(batch.expected_harvest_date) <= new Date(batch.planting_date)
-    ) {
+    // Validate dùng giá trị trong patch nếu có, ngược lại lấy từ batch hiện tại
+    const planting = (patch.planting_date ?? batch.planting_date) as Date | null;
+    const expected = (patch.expected_harvest_date ?? batch.expected_harvest_date) as Date | null;
+    const actual = (patch.actual_harvest_date ?? batch.actual_harvest_date) as Date | null;
+
+    if (planting && expected && new Date(expected) <= new Date(planting)) {
       throw new BadRequestException(
         'expected_harvest_date phải lớn hơn planting_date',
       );
     }
-    if (
-      batch.planting_date &&
-      batch.actual_harvest_date &&
-      new Date(batch.actual_harvest_date) <= new Date(batch.planting_date)
-    ) {
+    if (planting && actual && new Date(actual) <= new Date(planting)) {
       throw new BadRequestException(
         'actual_harvest_date phải lớn hơn planting_date',
       );
     }
 
-    // kiểm tra harvested_quantity, shipped_quantity nếu có thay đổi
     if (input.harvested_quantity !== undefined)
-      batch.harvested_quantity = parseNumber(input.harvested_quantity) as any;
+      patch.harvested_quantity = parseNumber(input.harvested_quantity) as any;
     if (input.shipped_quantity !== undefined)
-      batch.shipped_quantity = parseNumber(input.shipped_quantity) as any;
+      patch.shipped_quantity = parseNumber(input.shipped_quantity) as any;
 
+    const harvested = patch.harvested_quantity ?? batch.harvested_quantity;
+    const shipped = patch.shipped_quantity ?? batch.shipped_quantity;
     if (
-      batch.harvested_quantity != null &&
-      batch.shipped_quantity != null &&
-      Number(batch.shipped_quantity) > Number(batch.harvested_quantity)
+      harvested != null &&
+      shipped != null &&
+      Number(shipped) > Number(harvested)
     ) {
       throw new BadRequestException(
         'shipped_quantity không được lớn hơn harvested_quantity',
       );
     }
-    
-    if (input.unit !== undefined) batch.unit = input.unit.trim() || 'kg';
-    if (input.notes !== undefined) batch.notes = input.notes;
 
-    return this.batchRepo.save(batch);
+    if (input.unit !== undefined) patch.unit = input.unit.trim() || 'kg';
+    if (input.notes !== undefined) patch.notes = input.notes;
+
+    if (Object.keys(patch).length > 0) {
+      await this.batchRepo.update(id, patch);
+    }
+    return this.findById(id);
   }
   // Method để chuyển đổi trạng thái của batch
   async transitionStatus(id: string, input: TransitionInput, caller: CallerCtx) {
@@ -258,33 +260,33 @@ export class BatchService {
     }
 
     // Pre-conditions theo từng transition
-  if (next === BatchStatus.HARVESTED) {
-  if (!input.actual_harvest_date || !input.actual_harvest_date.toString().trim()) {
-    throw new BadRequestException(
-      'actual_harvest_date là bắt buộc khi chuyển sang HARVESTED',
-    );
-  }
+    // Dùng repo.update(patch) thay vì save(entity) — xem comment ở method update()
+    const patch: Partial<Batch> = { status: next };
 
-  if (input.harvested_quantity === undefined || input.harvested_quantity === '') {
-    throw new BadRequestException(
-      'harvested_quantity là bắt buộc khi chuyển sang HARVESTED',
-    );
-  }
+    if (next === BatchStatus.HARVESTED) {
+      if (!input.actual_harvest_date || !input.actual_harvest_date.toString().trim()) {
+        throw new BadRequestException(
+          'actual_harvest_date là bắt buộc khi chuyển sang HARVESTED',
+        );
+      }
+      if (input.harvested_quantity === undefined || input.harvested_quantity === '') {
+        throw new BadRequestException(
+          'harvested_quantity là bắt buộc khi chuyển sang HARVESTED',
+        );
+      }
 
-  const ah = parseDate(input.actual_harvest_date)!;
+      const ah = parseDate(input.actual_harvest_date)!;
+      if (batch.planting_date && ah <= new Date(batch.planting_date)) {
+        throw new BadRequestException(
+          'actual_harvest_date phải lớn hơn planting_date',
+        );
+      }
+      const hq = parseNumber(input.harvested_quantity)!;
 
-  
-  if (batch.planting_date && ah <= new Date(batch.planting_date)) {
-    throw new BadRequestException(
-      'actual_harvest_date phải lớn hơn planting_date',
-    );
-  }
+      patch.actual_harvest_date = ah as any;
+      patch.harvested_quantity = hq as any;
+    }
 
-  const hq = parseNumber(input.harvested_quantity)!;
-
-  batch.actual_harvest_date = ah as any;
-  batch.harvested_quantity = hq as any;
-}
     if (next === BatchStatus.SHIPPED) {
       if (input.shipped_quantity === undefined || input.shipped_quantity === '')
         throw new BadRequestException(
@@ -299,11 +301,11 @@ export class BatchService {
           'shipped_quantity không được lớn hơn harvested_quantity',
         );
       }
-      batch.shipped_quantity = sq as any;
+      patch.shipped_quantity = sq as any;
     }
 
-    batch.status = next;
-    return this.batchRepo.save(batch);
+    await this.batchRepo.update(id, patch);
+    return this.findById(id);
   }
   // Method delete (chỉ xóa được batch ở trạng thái SEEDING)
   async delete(id: string) {
