@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RedisModule } from '@app/shared';
 import { AuthModule } from './auth/auth.module';
 import { KeyModule } from './keys/key.module';
+import { NotificationModule } from './notification/notification.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -30,6 +31,7 @@ import { HealthController } from './health.controller';
 
     AuthModule,
     KeyModule,
+    NotificationModule,
   ],
   controllers: [HealthController],
 })

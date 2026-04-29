@@ -13,6 +13,7 @@ import { ProductModule } from './modules/product/product.module';
 import { TraceModule }   from './modules/trace/trace.module';
 import { MediaModule }   from './modules/media/media.module';
 import { AuditModule }   from './modules/audit/audit.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 import { JwtAuthGuard, RolesGuard, OwnershipGuard } from './common/guards';
 import { PolicyModule } from './common/policy.module';
@@ -40,6 +41,7 @@ import { PolicyModule } from './common/policy.module';
     TraceModule,
     MediaModule,
     AuditModule,
+    NotificationModule,
   ],
   providers: [
     // Rate limiting (chạy TRƯỚC JwtAuthGuard để chặn sớm brute-force)

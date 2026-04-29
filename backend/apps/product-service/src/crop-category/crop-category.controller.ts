@@ -38,7 +38,7 @@ export class CropCategoryController {
   @GrpcMethod('ProductService', 'DeleteCropCategory')
   async delete(data: { id: string }) {
     await this.service.delete(data.id);
-    return {};
+    return {};  
   }
 
   @GrpcMethod('ProductService', 'GetCropCategoryById')

@@ -91,3 +91,12 @@ export enum MediaEntityType {
   USER_AVATAR = 'USER_AVATAR',
   QR_CODE = 'QR_CODE',
 }
+
+// ========================
+// NOTIFICATION ENUMS
+// ========================
+export enum NotificationType {
+  INSPECTION_CREATED = 'INSPECTION_CREATED',
+  INSPECTION_RESULT = 'INSPECTION_RESULT',
+  USER_ACCOUNT_UPDATE = 'USER_ACCOUNT_UPDATE',
+}
