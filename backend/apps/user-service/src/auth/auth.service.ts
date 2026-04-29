@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -14,9 +15,10 @@ import { randomUUID } from 'crypto';
 
 import { User } from '../entities/user.entity';
 import { UserProfile } from '../entities/user-profile.entity';
-import { Role, UserStatus } from '@app/shared';
+import { Role, UserStatus, NotificationType } from '@app/shared';
 import { JwtKeyService } from './jwt-key.service';
 import { TokenRevocationService } from './token-revocation.service';
+import { NotificationService } from '../notification/notification.service';
 
 // Dto cho các request gRPC 
 export interface RegisterRequest {
@@ -38,6 +40,8 @@ export interface RefreshTokensRequest {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -49,7 +53,17 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly jwtKeyService: JwtKeyService,
     private readonly tokenRevocation: TokenRevocationService,
+    private readonly notificationService: NotificationService,
   ) {}
+
+  // best-effort notify (không throw)
+  private async safeNotify(input: Parameters<NotificationService['create']>[0]) {
+    try {
+      await this.notificationService.create(input);
+    } catch (err) {
+      this.logger.warn(`Notify failed: ${(err as Error).message}`);
+    }
+  }
 
   // Register method 
   async register(dto: RegisterRequest) {
@@ -201,17 +215,39 @@ export class AuthService {
     });
     const saved = await this.userRepo.save(user);
     await this.profileRepo.save(this.profileRepo.create({ user_id: saved.id }));
+
+    void this.safeNotify({
+      user_id: saved.id,
+      type: NotificationType.USER_ACCOUNT_UPDATE,
+      title: 'Chào mừng đến với AgriTrace',
+      message: `Tài khoản của bạn đã được tạo với vai trò ${saved.role}.`,
+      data: { event: 'account_created', role: saved.role },
+    });
+
     return saved;
   }
 
   async updateUser(id: string, dto: any) {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new UnauthorizedException('Không tìm thấy user');
+    const previousRole = user.role;
     if (dto.full_name) user.full_name = dto.full_name;
     if (dto.phone) user.phone = dto.phone;
     if (dto.role) user.role = dto.role;
     if (dto.status) user.status = dto.status;
-    return this.userRepo.save(user);
+    const saved = await this.userRepo.save(user);
+
+    if (dto.role && dto.role !== previousRole) {
+      void this.safeNotify({
+        user_id: saved.id,
+        type: NotificationType.USER_ACCOUNT_UPDATE,
+        title: 'Vai trò tài khoản đã được cập nhật',
+        message: `Vai trò của bạn đã được đổi thành ${saved.role}.`,
+        data: { event: 'role_changed', from: previousRole, to: saved.role },
+      });
+    }
+
+    return saved;
   }
 
   async updateProfile(

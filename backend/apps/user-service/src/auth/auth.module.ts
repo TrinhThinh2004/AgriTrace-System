@@ -14,12 +14,14 @@ import { AuthController } from './auth.controller';
 import { JwtKeyService } from './jwt-key.service';
 import { TokenRevocationService } from './token-revocation.service';
 import { JwtRotationCron } from './jwt-rotation.cron';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserProfile, UserKey, JwtKey, RevokedAccessToken]),
     JwtModule.register({}),
     ScheduleModule.forRoot(),
+    NotificationModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtKeyService, TokenRevocationService, JwtRotationCron],

@@ -4,17 +4,38 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
+  OnModuleInit,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ClientGrpc } from '@nestjs/microservices';
+import { firstValueFrom, Observable } from 'rxjs';
 import { Inspection } from '../entities/inspection.entity';
-import { InspectionType, InspectionResult } from '@app/shared';
+import { InspectionType, InspectionResult, NotificationType } from '@app/shared';
 import {
   CreateInspectionDto,
   UpdateInspectionDto,
   ListInspectionDto,
   SignInspectionDto,
 } from './dto';
+
+interface ProductServiceGrpc {
+  getBatchById(data: { batch_id: string }): Observable<any>;
+  getFarmById(data: { farm_id: string }): Observable<any>;
+}
+
+interface UserServiceGrpc {
+  createNotification(data: {
+    user_id: string;
+    type: string;
+    title: string;
+    message: string;
+    link?: string;
+    data?: string;
+  }): Observable<any>;
+}
 
 interface CallerCtx {
   userId: string | null;
@@ -55,11 +76,71 @@ function validateScheduledVsConducted(
 }
 
 @Injectable()
-export class InspectionService {
+export class InspectionService implements OnModuleInit {
+  private readonly logger = new Logger(InspectionService.name);
+  private productService!: ProductServiceGrpc;
+  private userService!: UserServiceGrpc;
+
   constructor(
     @InjectRepository(Inspection)
     private readonly repo: Repository<Inspection>,
+    @Inject('PRODUCT_SERVICE') private readonly productClient: ClientGrpc,
+    @Inject('USER_SERVICE') private readonly userClient: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.productService =
+      this.productClient.getService<ProductServiceGrpc>('ProductService');
+    this.userService =
+      this.userClient.getService<UserServiceGrpc>('UserService');
+  }
+
+  // Lấy owner_id (Farmer) của batch để gửi notification
+  private async findBatchOwner(batchId: string): Promise<string | null> {
+    try {
+      const batch = await firstValueFrom(
+        this.productService.getBatchById({ batch_id: batchId }),
+      );
+      if (!batch?.farm_id) return null;
+      const farm = await firstValueFrom(
+        this.productService.getFarmById({ farm_id: batch.farm_id }),
+      );
+      return farm?.owner_id ?? null;
+    } catch (err) {
+      this.logger.warn(
+        `Cannot resolve owner for batch ${batchId}: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  // Notify owner (Farmer) về sự kiện liên quan đến inspection
+  private async notifyOwner(
+    batchId: string,
+    inspectionId: string,
+    type: NotificationType,
+    title: string,
+    message: string,
+  ) {
+    try {
+      const ownerId = await this.findBatchOwner(batchId);
+      if (!ownerId) return;
+      await firstValueFrom(
+        this.userService.createNotification({
+          user_id: ownerId,
+          type,
+          title,
+          message,
+          link: `/batch/${batchId}`,
+          data: JSON.stringify({ batch_id: batchId, inspection_id: inspectionId }),
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Notify failed for batch ${batchId}: ${(err as Error).message}`,
+      );
+    }
+  }
   // method create 
   async create(input: CreateInspectionDto, caller: CallerCtx) {
     if (!caller?.userId) throw new ForbiddenException('Thiếu thông tin caller');
@@ -95,7 +176,29 @@ export class InspectionService {
       notes: input.notes ?? undefined,
       report_url: input.report_url ?? undefined,
     });
-    return this.repo.save(inspection);
+    const saved = await this.repo.save(inspection);
+
+    // Notify chủ batch (Farmer) — không block flow nếu fail
+    void this.notifyOwner(
+      saved.batch_id,
+      saved.id,
+      NotificationType.INSPECTION_CREATED,
+      'Có cuộc kiểm định mới',
+      `Lô của bạn vừa được lên lịch kiểm định (${saved.inspection_type}).`,
+    );
+
+    // Nếu tạo luôn với result != PENDING thì cũng notify kết quả
+    if (saved.result !== InspectionResult.PENDING) {
+      void this.notifyOwner(
+        saved.batch_id,
+        saved.id,
+        NotificationType.INSPECTION_RESULT,
+        'Kết quả kiểm định',
+        `Kết quả kiểm định lô của bạn: ${saved.result}.`,
+      );
+    }
+
+    return saved;
   }
   // method update
   async update(id: string, input: UpdateInspectionDto) {
@@ -105,6 +208,8 @@ export class InspectionService {
         'Inspection đã được ký — không thể chỉnh sửa',
       );
     }
+
+    const previousResult = inspection.result;
 
     if (input.inspection_type !== undefined) {
       inspection.inspection_type = assertInspectionType(
@@ -138,7 +243,24 @@ export class InspectionService {
     if (input.notes !== undefined) inspection.notes = input.notes;
     if (input.report_url !== undefined) inspection.report_url = input.report_url;
 
-    return this.repo.save(inspection);
+    const saved = await this.repo.save(inspection);
+
+    // Chỉ notify khi result chuyển từ PENDING → PASS|FAIL|CONDITIONAL_PASS
+    const transitionedToResult =
+      previousResult === InspectionResult.PENDING &&
+      saved.result !== InspectionResult.PENDING;
+
+    if (transitionedToResult) {
+      void this.notifyOwner(
+        saved.batch_id,
+        saved.id,
+        NotificationType.INSPECTION_RESULT,
+        'Kết quả kiểm định',
+        `Kết quả kiểm định lô của bạn: ${saved.result}.`,
+      );
+    }
+
+    return saved;
   }
   // method delete
   async delete(id: string) {
