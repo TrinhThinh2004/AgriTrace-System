@@ -18,16 +18,19 @@ export class Notification {
   @Index()
   user_id!: string;
 
+  // loại thông báo
   @Column({ type: 'enum', enum: NotificationType })
   type!: NotificationType;
 
+  // tiêu đề ngắn gọn
   @Column({ type: 'varchar', length: 200 })
   title!: string;
 
+  // nội dung chi tiết
   @Column({ type: 'text' })
   message!: string;
 
-  // route frontend khi click vào notification, vd: '/batch/abc'
+  // optional link khi click vào thông báo sẽ dẫn đến
   @Column({ type: 'varchar', length: 500, nullable: true })
   link!: string | null;
 

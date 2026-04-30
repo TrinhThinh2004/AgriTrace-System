@@ -25,7 +25,7 @@ interface JwtPayload {
   jti?: string;
   exp?: number;
 }
-
+// WS gateway để push notification realtime đến client
 @WebSocketGateway({
   namespace: '/notifications',
   cors: { origin: true, credentials: true },
@@ -46,7 +46,7 @@ export class NotificationGateway
     private readonly jwtKeyService: GatewayJwtKeyService,
     private readonly revocationClient: TokenRevocationClient,
   ) {}
-
+  // Khởi tạo Redis subscriber để lắng nghe event thông báo mới
   async onModuleInit() {
     // Tạo subscriber riêng (ioredis yêu cầu connection riêng cho pub/sub)
     this.subscriber = this.redis.duplicate();
@@ -76,7 +76,7 @@ export class NotificationGateway
       this.server.to(room).emit('notification:unread-count-updated');
     });
   }
-
+  // Cleanup Redis subscriber khi module bị hủy
   async onModuleDestroy() {
     if (this.subscriber) {
       try {
@@ -87,7 +87,7 @@ export class NotificationGateway
       }
     }
   }
-
+  // Xác thực và xử lý kết nối WS từ client
   async handleConnection(client: Socket) {
     try {
       const token = this.extractToken(client);
@@ -119,7 +119,7 @@ export class NotificationGateway
       this.logger.debug(`Client disconnected: ${client.id} (user ${userId})`);
     }
   }
-
+  // Hàm helper để trích xuất token từ handshake 
   private extractToken(client: Socket): string | null {
     const authToken = (client.handshake.auth as any)?.token;
     if (typeof authToken === 'string' && authToken) return authToken;
@@ -134,7 +134,8 @@ export class NotificationGateway
 
     return null;
   }
-
+  
+  // Hàm helper để xác thực token và lấy payload
   private async verifyToken(token: string): Promise<JwtPayload> {
     const decoded = jwtDecode(token, { complete: true }) as
       | { header?: { kid?: string } }

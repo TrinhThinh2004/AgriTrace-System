@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Bell, ChevronRight, Menu, PanelLeftClose, PanelLeftOpen, LogOut, UserCog } from "lucide-react";
+import { ChevronRight, Menu, PanelLeftClose, PanelLeftOpen, LogOut, UserCog } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSidebar } from "./SidebarContext";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const breadcrumbMap: Record<string, string> = {
   "/dashboard": "Trang chủ",
@@ -70,10 +71,7 @@ export function AppHeader() {
             {user.role}
           </Badge>
         )}
-        <Button variant="ghost" size="icon" className="relative h-8 w-8">
-          <Bell className="h-4 w-4" />
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-destructive text-[8px] text-destructive-foreground flex items-center justify-center">3</span>
-        </Button>
+        <NotificationBell />
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

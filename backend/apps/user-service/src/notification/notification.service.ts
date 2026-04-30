@@ -29,7 +29,7 @@ export class NotificationService {
     private readonly repo: Repository<Notification>,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
-
+  // Tạo thông báo mới và publish event qua Redis
   async create(input: CreateNotificationInput): Promise<Notification> {
     const entity = this.repo.create({
       user_id: input.user_id,
@@ -73,11 +73,11 @@ export class NotificationService {
       pagination: { page, limit, total },
     };
   }
-
+  // Lấy số lượng thông báo chưa đọc của user
   async getUnreadCount(userId: string): Promise<number> {
     return this.repo.count({ where: { user_id: userId, is_read: false } });
   }
-
+  // Đánh dấu một thông báo là đã đọc
   async markAsRead(id: string, userId: string): Promise<Notification> {
     const notif = await this.repo.findOne({ where: { id } });
     if (!notif) throw new NotFoundException('Không tìm thấy thông báo');
@@ -91,7 +91,7 @@ export class NotificationService {
     }
     return notif;
   }
-
+  // Đánh dấu tất cả thông báo của user là đã đọc
   async markAllAsRead(userId: string): Promise<number> {
     const result = await this.repo.update(
       { user_id: userId, is_read: false },
@@ -99,7 +99,7 @@ export class NotificationService {
     );
     return result.affected ?? 0;
   }
-
+  // Xóa một thông báo
   async delete(id: string, userId: string): Promise<number> {
     const notif = await this.repo.findOne({ where: { id } });
     if (!notif) throw new NotFoundException('Không tìm thấy thông báo');

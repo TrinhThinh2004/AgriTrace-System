@@ -318,9 +318,9 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <p className="text-sm font-medium mb-1">
-                  Public Key <Badge variant="outline" className="ml-1">{genResult.algorithm}</Badge>
-                </p>
+                <div className="text-sm font-medium mb-1 flex items-center gap-1">
+                  Public Key <Badge variant="outline">{genResult.algorithm}</Badge>
+                </div>
                 <Textarea
                   value={genResult.public_key}
                   readOnly
