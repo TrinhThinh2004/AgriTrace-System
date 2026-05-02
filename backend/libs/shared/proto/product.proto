@@ -24,6 +24,11 @@ service ProductService {
   rpc DeleteFarm           (DeleteFarmRequest)           returns (EmptyResponse);
   rpc ListFarms            (ListFarmsRequest)            returns (ListFarmsResponse);
 
+  // Farm Certification workflow
+  rpc RequestCertification (RequestCertificationRequest) returns (FarmResponse);
+  rpc ApproveCertification (ApproveCertificationRequest) returns (FarmResponse);
+  rpc RejectCertification  (RejectCertificationRequest)  returns (FarmResponse);
+
   //Batch CRUD 
   rpc CreateBatch          (CreateBatchRequest)          returns (BatchResponse);
   rpc UpdateBatch          (UpdateBatchRequest)          returns (BatchResponse);
@@ -99,17 +104,21 @@ message ListCropCategoriesResponse {
 
 // ───────── Farm ─────────
 message FarmResponse {
-  string id                   = 1;
-  string owner_id             = 2;
-  string name                 = 3;
-  string address              = 4;
-  string location_lat         = 5;
-  string location_long        = 6;
-  string area_hectares        = 7;
-  string certification_status = 8;
-  string status               = 9;
-  string created_at           = 10;
-  string updated_at           = 11;
+  string id                            = 1;
+  string owner_id                      = 2;
+  string name                          = 3;
+  string address                       = 4;
+  string location_lat                  = 5;
+  string location_long                 = 6;
+  string area_hectares                 = 7;
+  string certification_status          = 8;
+  string status                        = 9;
+  string created_at                    = 10;
+  string updated_at                    = 11;
+  string requested_certification_type  = 12;
+  string certified_at                  = 13;
+  string certified_by                  = 14;
+  string reject_reason                 = 15;
 }
 
 message GetFarmByIdRequest {
@@ -143,15 +152,31 @@ message DeleteFarmRequest {
 }
 
 message ListFarmsRequest {
-  string owner_id = 1;
-  string status   = 2;
-  int32  page     = 3;
-  int32  limit    = 4;
+  string owner_id             = 1;
+  string status               = 2;
+  int32  page                 = 3;
+  int32  limit                = 4;
+  string certification_status = 5;
 }
 
 message ListFarmsResponse {
   repeated FarmResponse items = 1;
   Pagination pagination       = 2;
+}
+
+message RequestCertificationRequest {
+  string farm_id        = 1;
+  string requested_type = 2; // VIETGAP|GLOBALGAP|ORGANIC
+}
+
+message ApproveCertificationRequest {
+  string farm_id      = 1;
+  string granted_type = 2; // optional: nếu admin override; nếu rỗng dùng requested_certification_type
+}
+
+message RejectCertificationRequest {
+  string farm_id = 1;
+  string reason  = 2;
 }
 
 // ───────── Batch ─────────

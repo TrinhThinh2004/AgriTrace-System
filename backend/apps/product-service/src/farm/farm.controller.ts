@@ -18,6 +18,10 @@ function toResponse(farm: Farm) {
     status: farm.status,
     created_at: farm.created_at?.toISOString() ?? '',
     updated_at: farm.updated_at?.toISOString() ?? '',
+    requested_certification_type: farm.requested_certification_type ?? '',
+    certified_at: farm.certified_at?.toISOString() ?? '',
+    certified_by: farm.certified_by ?? '',
+    reject_reason: farm.reject_reason ?? '',
   };
 }
 
@@ -67,6 +71,7 @@ export class FarmController {
   async list(data: AuthData & {
     owner_id?: string;
     status?: string;
+    certification_status?: string;
     page?: number;
     limit?: number;
   }) {
@@ -84,5 +89,44 @@ export class FarmController {
         total: result.total,
       },
     };
+  }
+
+  @GrpcMethod('ProductService', 'RequestCertification')
+  async requestCertification(
+    data: AuthData & { farm_id: string; requested_type: string },
+  ) {
+    const caller = data.__auth ?? { userId: null, role: null };
+    const farm = await this.service.requestCertification(
+      data.farm_id,
+      data.requested_type,
+      caller,
+    );
+    return toResponse(farm);
+  }
+
+  @GrpcMethod('ProductService', 'ApproveCertification')
+  async approveCertification(
+    data: AuthData & { farm_id: string; granted_type?: string },
+  ) {
+    const caller = data.__auth ?? { userId: null, role: null };
+    const farm = await this.service.approveCertification(
+      data.farm_id,
+      caller,
+      data.granted_type,
+    );
+    return toResponse(farm);
+  }
+
+  @GrpcMethod('ProductService', 'RejectCertification')
+  async rejectCertification(
+    data: AuthData & { farm_id: string; reason: string },
+  ) {
+    const caller = data.__auth ?? { userId: null, role: null };
+    const farm = await this.service.rejectCertification(
+      data.farm_id,
+      data.reason,
+      caller,
+    );
+    return toResponse(farm);
   }
 }

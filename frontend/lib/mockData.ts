@@ -51,14 +51,6 @@ export interface Activity {
   timestamp: string;
 }
 
-export interface Standard {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  status: "active" | "draft";
-}
-
 export const currentUser: User = {
   id: "u1",
   name: "Nguyen Van Admin",
@@ -106,8 +98,3 @@ export const mockActivities: Activity[] = [
   { id: "a5", action: "Đăng ký nông trại", user: "Nguyen Van Admin", target: "Trang trại Cao Nguyên", timestamp: "2024-03-20 10:00" },
 ];
 
-export const mockStandards: Standard[] = [
-  { id: "s1", name: "VietGAP", code: "VGAP-2023", description: "Tiêu chuẩn Thực hành Nông nghiệp Tốt Việt Nam cho sản xuất an toàn", status: "active" },
-  { id: "s2", name: "GlobalGAP", code: "GGAP-5.4", description: "Tiêu chuẩn quốc tế cho quy trình sản xuất nông nghiệp", status: "active" },
-  { id: "s3", name: "Organic Vietnam", code: "ORG-VN-2024", description: "Tiêu chuẩn chứng nhận hữu cơ quốc gia", status: "draft" },
-];

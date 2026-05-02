@@ -46,3 +46,30 @@ export function useDeleteFarm() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["farms"] }),
   });
 }
+
+export function useRequestCertification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, requested_type }: { id: string; requested_type: string }) =>
+      farmApi.requestCertification(id, { requested_type }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["farms"] }),
+  });
+}
+
+export function useApproveCertification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, granted_type }: { id: string; granted_type?: string }) =>
+      farmApi.approveCertification(id, granted_type ? { granted_type } : undefined),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["farms"] }),
+  });
+}
+
+export function useRejectCertification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      farmApi.rejectCertification(id, { reason }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["farms"] }),
+  });
+}

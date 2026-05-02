@@ -21,6 +21,10 @@ export interface Farm {
   status: string;
   created_at: string;
   updated_at: string;
+  requested_certification_type?: string;
+  certified_at?: string;
+  certified_by?: string;
+  reject_reason?: string;
 }
 
 export interface FarmListResponse {
@@ -145,6 +149,7 @@ export interface ListParams {
   page?: number;
   limit?: number;
   status?: string;
+  certification_status?: string;
 }
 
 export interface BatchListParams extends ListParams {
@@ -177,6 +182,24 @@ export const farmApi = {
 
   delete: (id: string) =>
     apiFetch<void>(`/farms/${id}`, { method: "DELETE" }),
+
+  requestCertification: (id: string, body: { requested_type: string }) =>
+    apiFetch<Farm>(`/farms/${id}/certification-request`, {
+      method: "POST",
+      body,
+    }),
+
+  approveCertification: (id: string, body?: { granted_type?: string }) =>
+    apiFetch<Farm>(`/farms/${id}/certification/approve`, {
+      method: "POST",
+      body: body ?? {},
+    }),
+
+  rejectCertification: (id: string, body: { reason: string }) =>
+    apiFetch<Farm>(`/farms/${id}/certification/reject`, {
+      method: "POST",
+      body,
+    }),
 };
 
 export const batchApi = {

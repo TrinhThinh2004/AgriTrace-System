@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import type { Farm } from "@/lib/api/product";
 
 import { CreateFarmDialog } from "@/components/CreateFarmDialog";
+import { FarmCertificationPanel } from "@/components/FarmCertificationPanel";
 import { ImageUploader } from "@/components/media/ImageUploader";
 import { AssetGallery } from "@/components/media/AssetGallery";
 import { AssetThumb } from "@/components/media/AssetThumb";
@@ -46,7 +47,6 @@ export default function FarmsManagement() {
     name: "",
     address: "",
     area_hectares: "",
-    certification_status: "NONE",
     status: "ACTIVE",
   });
 
@@ -73,7 +73,6 @@ export default function FarmsManagement() {
       name: farm.name,
       address: farm.address ?? "",
       area_hectares: farm.area_hectares ?? "",
-      certification_status: farm.certification_status ?? "NONE",
       status: farm.status ?? "ACTIVE",
     });
   };
@@ -87,7 +86,6 @@ export default function FarmsManagement() {
           name: editForm.name || undefined,
           address: editForm.address || undefined,
           area_hectares: editForm.area_hectares || undefined,
-          certification_status: editForm.certification_status || undefined,
           status: editForm.status || undefined,
         },
       });
@@ -97,6 +95,11 @@ export default function FarmsManagement() {
       toast.error("Lỗi", { description: e.message });
     }
   };
+
+  const editFarmFromList =
+    editFarm && farms.find((f) => f.id === editFarm.id)
+      ? farms.find((f) => f.id === editFarm.id)!
+      : editFarm;
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bạn có chắc muốn xóa trang trại này?")) return;
@@ -225,33 +228,24 @@ export default function FarmsManagement() {
                   />
                 </div>
                 <div>
-                  <Label>Chứng nhận</Label>
-                  <Select value={editForm.certification_status} onValueChange={(v) => setEditForm((p) => ({ ...p, certification_status: v }))}>
+                  <Label>Trạng thái</Label>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm((p) => ({ ...p, status: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="NONE">Chưa có</SelectItem>
-                      <SelectItem value="PENDING">Đang chờ</SelectItem>
-                      <SelectItem value="VIETGAP">VietGAP</SelectItem>
-                      <SelectItem value="GLOBALGAP">GlobalGAP</SelectItem>
-                      <SelectItem value="ORGANIC">Hữu cơ</SelectItem>
+                      <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                      <SelectItem value="INACTIVE">Ngưng</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <div>
-                <Label>Trạng thái</Label>
-                <Select value={editForm.status} onValueChange={(v) => setEditForm((p) => ({ ...p, status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                    <SelectItem value="INACTIVE">Ngưng</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               <Button className="w-full" onClick={handleUpdate} disabled={updateFarm.isPending}>
                 {updateFarm.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 Lưu thay đổi
               </Button>
+
+              {editFarmFromList && (
+                <FarmCertificationPanel farm={editFarmFromList} />
+              )}
 
               <div className="pt-4 border-t space-y-3">
                 <Label>Ảnh trang trại</Label>

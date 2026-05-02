@@ -46,6 +46,22 @@ export class Farm {
   })
   certification_status!: CertificationStatus;
 
+  // loại chứng nhận farmer xin (chỉ có giá trị khi status=PENDING)
+  @Column({ type: 'enum', enum: CertificationStatus, nullable: true })
+  requested_certification_type!: CertificationStatus | null;
+
+  // thời điểm admin duyệt thành công
+  @Column({ type: 'timestamptz', nullable: true })
+  certified_at!: Date | null;
+
+  // admin nào duyệt (hoặc reject)
+  @Column({ type: 'uuid', nullable: true })
+  certified_by!: string | null;
+
+  // lý do từ chối (nếu admin reject)
+  @Column({ type: 'text', nullable: true })
+  reject_reason!: string | null;
+
   // trạng thái farm: ACTIVE, INACTIVE
   @Column({ type: 'enum', enum: FarmStatus, default: FarmStatus.ACTIVE })
   status!: FarmStatus;

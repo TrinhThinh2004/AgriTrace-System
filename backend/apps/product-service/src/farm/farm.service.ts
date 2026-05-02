@@ -4,12 +4,22 @@ import {
   BadRequestException,
   ForbiddenException,
   ConflictException,
+  Inject,
+  OnModuleInit,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ClientGrpc } from '@nestjs/microservices';
+import { firstValueFrom, Observable } from 'rxjs';
 import { Farm } from '../entities/farm.entity';
 import { Batch } from '../entities/batch.entity';
-import { CertificationStatus, FarmStatus, Role } from '@app/shared';
+import {
+  CertificationStatus,
+  FarmStatus,
+  Role,
+  NotificationType,
+} from '@app/shared';
 
 interface CreateFarmInput {
   owner_id?: string;
@@ -34,6 +44,7 @@ interface UpdateFarmInput {
 interface ListParams {
   owner_id?: string;
   status?: string;
+  certification_status?: string;
   page?: number;
   limit?: number;
 }
@@ -43,20 +54,46 @@ interface CallerCtx {
   role: string | null;
 }
 
+interface UserServiceGrpc {
+  createNotification(data: {
+    user_id: string;
+    type: string;
+    title: string;
+    message: string;
+    link?: string;
+    data?: string;
+  }): Observable<any>;
+}
+
+const REQUESTABLE_TYPES: CertificationStatus[] = [
+  CertificationStatus.VIETGAP,
+  CertificationStatus.GLOBALGAP,
+  CertificationStatus.ORGANIC,
+];
+
 function toNumberOrNull(v: any): number | null {
   if (v === undefined || v === null || v === '') return null;
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
+
 // Service chứa business logic
 @Injectable()
-export class FarmService {
+export class FarmService implements OnModuleInit {
+  private readonly logger = new Logger(FarmService.name);
+  private userService!: UserServiceGrpc;
+
   constructor(
     @InjectRepository(Farm)
     private readonly repo: Repository<Farm>,
     @InjectRepository(Batch)
     private readonly batchRepo: Repository<Batch>,
+    @Inject('USER_SERVICE') private readonly userClient: ClientGrpc,
   ) {}
+
+  onModuleInit() {
+    this.userService = this.userClient.getService<UserServiceGrpc>('UserService');
+  }
 
   async create(input: CreateFarmInput, caller: CallerCtx) {
     if (!caller?.userId) throw new ForbiddenException('Thiếu thông tin caller');
@@ -156,12 +193,22 @@ export class FarmService {
     return count > 0;
   }
 
-  // Method list với filter theo owner_id, status và pagination
-  async list({ owner_id, status, page = 1, limit = 20 }: ListParams) {
+  // Method list với filter theo owner_id, status, certification_status và pagination
+  async list({
+    owner_id,
+    status,
+    certification_status,
+    page = 1,
+    limit = 20,
+  }: ListParams) {
     const qb = this.repo.createQueryBuilder('f');
     if (owner_id) qb.andWhere('f.owner_id = :owner_id', { owner_id });
     if (status) qb.andWhere('f.status = :status', { status });
-    qb.orderBy('f.created_at', 'DESC');
+    if (certification_status)
+      qb.andWhere('f.certification_status = :cert', {
+        cert: certification_status,
+      });
+    qb.orderBy('f.updated_at', 'DESC');
 
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
@@ -169,5 +216,161 @@ export class FarmService {
 
     const [items, total] = await qb.getManyAndCount();
     return { items, page: safePage, limit: safeLimit, total };
+  }
+
+  // ── Certification workflow ──
+
+  async requestCertification(
+    farmId: string,
+    requestedType: string,
+    caller: CallerCtx,
+  ) {
+    if (!caller?.userId) throw new ForbiddenException('Thiếu thông tin caller');
+
+    const type = requestedType as CertificationStatus;
+    if (!REQUESTABLE_TYPES.includes(type)) {
+      throw new BadRequestException(
+        `Loại chứng nhận không hợp lệ: chỉ chấp nhận VIETGAP, GLOBALGAP, ORGANIC`,
+      );
+    }
+
+    const farm = await this.findById(farmId);
+
+    // Farmer chỉ được xin cho farm của mình
+    if (caller.role === Role.FARMER && farm.owner_id !== caller.userId) {
+      throw new ForbiddenException('Bạn không sở hữu trang trại này');
+    }
+
+    if (farm.certification_status !== CertificationStatus.NONE) {
+      throw new ConflictException(
+        farm.certification_status === CertificationStatus.PENDING
+          ? 'Trang trại đang chờ duyệt yêu cầu trước đó'
+          : `Trang trại đã có chứng nhận ${farm.certification_status}. Hãy huỷ chứng nhận hiện tại trước khi xin loại mới.`,
+      );
+    }
+
+    farm.certification_status = CertificationStatus.PENDING;
+    farm.requested_certification_type = type;
+    farm.certified_at = null;
+    farm.certified_by = null;
+    farm.reject_reason = null;
+
+    const saved = await this.repo.save(farm);
+    return saved;
+  }
+
+  async approveCertification(
+    farmId: string,
+    caller: CallerCtx,
+    grantedTypeOverride?: string,
+  ) {
+    if (!caller?.userId) throw new ForbiddenException('Thiếu thông tin caller');
+    if (caller.role !== Role.ADMIN)
+      throw new ForbiddenException('Chỉ admin mới được duyệt chứng nhận');
+
+    const farm = await this.findById(farmId);
+
+    if (farm.certification_status !== CertificationStatus.PENDING) {
+      throw new ConflictException(
+        'Chỉ có thể duyệt yêu cầu đang ở trạng thái PENDING',
+      );
+    }
+
+    const candidate =
+      (grantedTypeOverride as CertificationStatus) ||
+      farm.requested_certification_type;
+    if (!candidate) {
+      throw new BadRequestException(
+        'Vui lòng chọn loại chứng nhận để cấp (VIETGAP, GLOBALGAP hoặc ORGANIC)',
+      );
+    }
+    if (!REQUESTABLE_TYPES.includes(candidate)) {
+      throw new BadRequestException(
+        `Loại chứng nhận không hợp lệ: ${candidate}`,
+      );
+    }
+
+    const grantedType = candidate;
+    farm.certification_status = grantedType;
+    farm.certified_at = new Date();
+    farm.certified_by = caller.userId;
+    farm.requested_certification_type = null;
+    farm.reject_reason = null;
+
+    const saved = await this.repo.save(farm);
+
+    void this.notifyOwner(
+      saved,
+      NotificationType.CERTIFICATION_APPROVED,
+      'Yêu cầu chứng nhận đã được duyệt',
+      `Trang trại "${saved.name}" đã được cấp chứng nhận ${grantedType}.`,
+    );
+
+    return saved;
+  }
+
+  async rejectCertification(
+    farmId: string,
+    reason: string,
+    caller: CallerCtx,
+  ) {
+    if (!caller?.userId) throw new ForbiddenException('Thiếu thông tin caller');
+    if (caller.role !== Role.ADMIN)
+      throw new ForbiddenException('Chỉ admin mới được từ chối chứng nhận');
+    if (!reason?.trim())
+      throw new BadRequestException('Vui lòng nhập lý do từ chối');
+
+    const farm = await this.findById(farmId);
+
+    if (farm.certification_status !== CertificationStatus.PENDING) {
+      throw new ConflictException(
+        'Chỉ có thể từ chối yêu cầu đang ở trạng thái PENDING',
+      );
+    }
+
+    const requestedType = farm.requested_certification_type;
+    farm.certification_status = CertificationStatus.NONE;
+    farm.requested_certification_type = null;
+    farm.certified_at = null;
+    farm.certified_by = caller.userId;
+    farm.reject_reason = reason.trim();
+
+    const saved = await this.repo.save(farm);
+
+    void this.notifyOwner(
+      saved,
+      NotificationType.CERTIFICATION_REJECTED,
+      'Yêu cầu chứng nhận bị từ chối',
+      `Yêu cầu cấp chứng nhận ${requestedType ?? ''} cho "${saved.name}" đã bị từ chối: ${saved.reject_reason}`,
+    );
+
+    return saved;
+  }
+
+  private async notifyOwner(
+    farm: Farm,
+    type: NotificationType,
+    title: string,
+    message: string,
+  ) {
+    try {
+      await firstValueFrom(
+        this.userService.createNotification({
+          user_id: farm.owner_id,
+          type,
+          title,
+          message,
+          link: `/farms`,
+          data: JSON.stringify({
+            farm_id: farm.id,
+            certification_status: farm.certification_status,
+          }),
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Notify owner failed for farm ${farm.id}: ${(err as Error).message}`,
+      );
+    }
   }
 }

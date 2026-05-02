@@ -29,6 +29,10 @@ export const FARM_1_ID = 'fa000000-0000-0000-0000-000000000001';
 export const FARM_2_ID = 'fa000000-0000-0000-0000-000000000002';
 export const FARM_3_ID = 'fa000000-0000-0000-0000-000000000003';
 export const FARM_4_ID = 'fa000000-0000-0000-0000-000000000004';
+// Farm với certification PENDING để demo workflow duyệt
+export const FARM_5_ID = 'fa000000-0000-0000-0000-000000000005';
+// Farm vừa bị reject để demo flow "Yêu cầu lại"
+export const FARM_6_ID = 'fa000000-0000-0000-0000-000000000006';
 
 // Batches
 export const BATCH_1_ID = 'b0000000-0000-0000-0000-000000000001';

@@ -23,6 +23,8 @@ import {
   FARM_2_ID,
   FARM_3_ID,
   FARM_4_ID,
+  FARM_5_ID,
+  FARM_6_ID,
   BATCH_1_ID,
   BATCH_2_ID,
   BATCH_3_ID,
@@ -137,7 +139,43 @@ export async function seedProducts() {
       certification_status: CertificationStatus.GLOBALGAP,
       status: FarmStatus.ACTIVE,
     },
+    {
+      id: FARM_5_ID,
+      owner_id: FARMER_1_ID,
+      name: 'Vườn dâu tây Mộc Châu',
+      address: 'Mộc Châu, Sơn La',
+      location_lat: 20.8333,
+      location_long: 104.6333,
+      area_hectares: 2.5,
+      certification_status: CertificationStatus.PENDING,
+      requested_certification_type: CertificationStatus.VIETGAP,
+      status: FarmStatus.ACTIVE,
+    },
+    {
+      id: FARM_6_ID,
+      owner_id: FARMER_2_ID,
+      name: 'Trang trại Bưởi Diễn Phúc Trạch',
+      address: 'Hương Khê, Hà Tĩnh',
+      location_lat: 18.1833,
+      location_long: 105.7167,
+      area_hectares: 4.8,
+      certification_status: CertificationStatus.NONE,
+      reject_reason:
+        'Hồ sơ đăng ký thiếu giấy chứng nhận quyền sử dụng đất, vui lòng bổ sung và gửi lại.',
+      status: FarmStatus.ACTIVE,
+    },
   ];
+
+  // Cleanup legacy PENDING rows tạo trước khi có field requested_certification_type
+  // (data được tạo trước khi workflow chứng nhận hoàn chỉnh có thể có status=PENDING
+  //  nhưng requested_certification_type=NULL → reset về NONE để admin/farmer xin lại đúng quy trình)
+  await ds.query(`
+    UPDATE farms
+       SET certification_status = 'NONE',
+           requested_certification_type = NULL
+     WHERE certification_status = 'PENDING'
+       AND requested_certification_type IS NULL
+  `);
 
   await farmRepo.upsert(farms, ['id']);
   console.log(`  Đã thêm ${farms.length} trang trại`);

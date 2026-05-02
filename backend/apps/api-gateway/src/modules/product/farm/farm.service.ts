@@ -9,6 +9,9 @@ interface ProductServiceGrpc {
   deleteFarm(data: any, metadata?: any): Observable<any>;
   getFarmById(data: any, metadata?: any): Observable<any>;
   listFarms(data: any, metadata?: any): Observable<any>;
+  requestCertification(data: any, metadata?: any): Observable<any>;
+  approveCertification(data: any, metadata?: any): Observable<any>;
+  rejectCertification(data: any, metadata?: any): Observable<any>;
 }
 
 @Injectable()
@@ -48,11 +51,56 @@ export class FarmService implements OnModuleInit {
   }
 
   list(
-    query: { owner_id?: string; status?: string; page?: number; limit?: number },
+    query: {
+      owner_id?: string;
+      status?: string;
+      certification_status?: string;
+      page?: number;
+      limit?: number;
+    },
     user: { id: string; role: string },
   ) {
     return firstValueFrom(
       this.grpc.listFarms(query, withAuthMetadata(user)),
+    );
+  }
+
+  requestCertification(
+    farmId: string,
+    requestedType: string,
+    user: { id: string; role: string },
+  ) {
+    return firstValueFrom(
+      this.grpc.requestCertification(
+        { farm_id: farmId, requested_type: requestedType },
+        withAuthMetadata(user),
+      ),
+    );
+  }
+
+  approveCertification(
+    farmId: string,
+    user: { id: string; role: string },
+    grantedType?: string,
+  ) {
+    return firstValueFrom(
+      this.grpc.approveCertification(
+        { farm_id: farmId, granted_type: grantedType ?? '' },
+        withAuthMetadata(user),
+      ),
+    );
+  }
+
+  rejectCertification(
+    farmId: string,
+    reason: string,
+    user: { id: string; role: string },
+  ) {
+    return firstValueFrom(
+      this.grpc.rejectCertification(
+        { farm_id: farmId, reason },
+        withAuthMetadata(user),
+      ),
     );
   }
 }
