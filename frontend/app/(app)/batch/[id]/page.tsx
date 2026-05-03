@@ -175,6 +175,15 @@ export default function BatchDetail() {
       setHarvestDialogOpen(true);
       return;
     }
+    // SHIPPED requires shipped_quantity (BE validates) → mở dialog hỏi
+    if (nextStatus.value === 'SHIPPED') {
+      setShipForm({
+        shipped_quantity:
+          batch?.harvested_quantity != null ? String(batch.harvested_quantity) : "",
+      });
+      setShipDialogOpen(true);
+      return;
+    }
     try {
       const body: any = { next_status: nextStatus.value as any };
       await transitionBatch.mutateAsync({ id, body });
@@ -220,6 +229,32 @@ export default function BatchDetail() {
     }
   };
 
+  const handleShipConfirm = async () => {
+    if (!id) return;
+    const qty = Number(shipForm.shipped_quantity);
+    if (!shipForm.shipped_quantity || !Number.isFinite(qty) || qty <= 0) {
+      toast.error("Vui lòng nhập sản lượng xuất kho hợp lệ");
+      return;
+    }
+    if (batch?.harvested_quantity != null && qty > Number(batch.harvested_quantity)) {
+      toast.error("Sản lượng xuất kho không được lớn hơn sản lượng thu hoạch");
+      return;
+    }
+    try {
+      await transitionBatch.mutateAsync({
+        id,
+        body: {
+          next_status: "SHIPPED",
+          shipped_quantity: String(shipForm.shipped_quantity),
+        },
+      });
+      toast.success("Chuyển trạng thái thành công → Đã xuất kho");
+      setShipDialogOpen(false);
+    } catch (e: any) {
+      toast.error("Lỗi chuyển trạng thái", { description: e.message });
+    }
+  };
+
   // Activity Log mutations
   const createLog = useCreateActivityLog();
   const deleteLog = useDeleteActivityLog();
@@ -241,6 +276,8 @@ export default function BatchDetail() {
   const [inspectionResultValue, setInspectionResultValue] = useState("PASS");
   const [harvestDialogOpen, setHarvestDialogOpen] = useState(false);
   const [harvestForm, setHarvestForm] = useState({ actual_harvest_date: "", harvested_quantity: "" });
+  const [shipDialogOpen, setShipDialogOpen] = useState(false);
+  const [shipForm, setShipForm] = useState({ shipped_quantity: "" });
 
   // Sign dialog state
   const [signDialogOpen, setSignDialogOpen] = useState(false);
@@ -821,6 +858,54 @@ export default function BatchDetail() {
           </Tabs>
         </div>
       </div>
+
+      {/* Dialog xuất kho */}
+      <Dialog open={shipDialogOpen} onOpenChange={(open) => setShipDialogOpen(open)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Xuất kho</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Sản lượng đã thu hoạch</Label>
+              <Input
+                value={
+                  batch.harvested_quantity != null
+                    ? `${batch.harvested_quantity} ${batch.unit}`
+                    : "—"
+                }
+                readOnly
+              />
+            </div>
+            <div>
+              <Label>Sản lượng xuất kho ({batch.unit})</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                max={batch.harvested_quantity ?? undefined}
+                value={shipForm.shipped_quantity}
+                onChange={(e) => setShipForm({ shipped_quantity: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShipDialogOpen(false)}
+                disabled={transitionBatch.isPending}
+              >
+                Huỷ
+              </Button>
+              <Button onClick={handleShipConfirm} disabled={transitionBatch.isPending}>
+                {transitionBatch.isPending && (
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                )}
+                Xác nhận
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog thu hoạch */}
       <Dialog open={harvestDialogOpen} onOpenChange={(open) => setHarvestDialogOpen(open)}>

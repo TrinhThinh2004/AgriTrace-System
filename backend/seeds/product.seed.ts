@@ -227,7 +227,7 @@ export async function seedProducts() {
       harvested_quantity: 15000,
       shipped_quantity: null,
       unit: 'kg',
-      notes: 'Giống ST25 chất lượng cao',
+      notes: 'Giống ST25 chất lượng cao', 
       created_by: FARMER_3_ID,
     },
     {
