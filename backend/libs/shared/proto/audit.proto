@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package audit;
+
+service AuditService {
+  // Append a new audit log (called by api-gateway interceptor, fire-and-forget OK)
+  rpc WriteLog       (WriteLogRequest)       returns (AuditLogResponse);
+
+  // Read APIs (admin)
+  rpc GetLogs        (GetLogsRequest)        returns (GetLogsResponse);
+  rpc GetLogBySeq    (SeqRequest)            returns (AuditLogResponse);
+
+  // Verify cryptographic proof for a single log
+  rpc VerifyLog      (SeqRequest)            returns (VerifyLogResponse);
+
+  // Anchors (on-chain)
+  rpc ListAnchors    (ListAnchorsRequest)    returns (ListAnchorsResponse);
+  rpc GetAnchor      (IdRequest)             returns (AnchorResponse);
+}
+
+message IdRequest  { string id = 1; }
+message SeqRequest { string seq_no = 1; } // bigint as string
+
+message Pagination {
+  int32 page  = 1;
+  int32 limit = 2;
+  int32 total = 3;
+}
+
+// ── WriteLog ───────────────────────────────────────────────
+message WriteLogRequest {
+  string actor_id     = 1;     // UUID, may be empty for system actions
+  string actor_role   = 2;     // ADMIN | FARMER | INSPECTOR | empty
+  string action       = 3;     // AUDIT_ACTIONS code
+  string entity_type  = 4;     // Farm | Batch | User | ...
+  string entity_id    = 5;     // resource id, may be empty
+  string before_data  = 6;     // JSON string, optional
+  string after_data   = 7;     // JSON string, optional
+  string metadata     = 8;     // JSON string: { ip, user_agent, request_id, ... }
+  string occurred_at  = 9;     // ISO timestamp (caller-provided to avoid drift)
+}
+
+message AuditLogResponse {
+  string id           = 1;
+  string seq_no       = 2;     // bigint as string
+  string actor_id     = 3;
+  string actor_role   = 4;
+  string action       = 5;
+  string entity_type  = 6;
+  string entity_id    = 7;
+  string before_data  = 8;
+  string after_data   = 9;
+  string metadata     = 10;
+  string prev_hash    = 11;
+  string record_hash  = 12;
+  string anchor_id    = 13;    // empty if not anchored yet
+  string created_at   = 14;
+}
+
+// ── Read APIs ──────────────────────────────────────────────
+message GetLogsRequest {
+  string entity_type  = 1;
+  string entity_id    = 2;
+  string actor_id     = 3;
+  string action       = 4;
+  string date_from    = 5;     // ISO
+  string date_to      = 6;     // ISO
+  int32  page         = 7;
+  int32  limit        = 8;
+}
+
+message GetLogsResponse {
+  repeated AuditLogResponse items = 1;
+  Pagination pagination = 2;
+}
+
+// ── Verify ─────────────────────────────────────────────────
+message VerifyLogResponse {
+  AuditLogResponse log         = 1;
+  string recomputed_hash       = 2;
+  bool   hash_chain_valid      = 3;     // recomputed_hash == log.record_hash
+  string prev_record_hash      = 4;     // for inspection
+  AnchorResponse anchor        = 5;     // empty if not yet anchored
+  bool   anchor_present        = 6;
+  bool   merkle_proof_valid    = 7;     // proof verified against on-chain root
+  string onchain_merkle_root   = 8;     // fetched from contract (hex)
+  bool   onchain_root_match    = 9;     // anchor.merkle_root == onchain_merkle_root
+  repeated string merkle_proof = 10;    // hex hashes for client display
+}
+
+// ── Anchors ────────────────────────────────────────────────
+message AnchorResponse {
+  string id                = 1;
+  string merkle_root       = 2;        // 0x-prefixed hex
+  string from_seq          = 3;
+  string to_seq            = 4;
+  string tx_hash           = 5;
+  string block_number      = 6;
+  int32  chain_id          = 7;
+  string onchain_anchor_id = 8;
+  string anchored_at       = 9;
+}
+
+message ListAnchorsRequest {
+  int32 page  = 1;
+  int32 limit = 2;
+}
+
+message ListAnchorsResponse {
+  repeated AnchorResponse items = 1;
+  Pagination pagination         = 2;
+}

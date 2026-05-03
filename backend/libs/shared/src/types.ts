@@ -66,19 +66,50 @@ export interface AuditEventPayload {
   timestamp: string;      // ISO string
 }
 
-// Event names (RabbitMQ routing keys)
-export const AUDIT_EVENTS = {
-  USER_REGISTERED:    'user.registered',
-  USER_ROLE_CHANGED:  'user.role_changed',
-  USER_SUSPENDED:     'user.suspended',
-  BATCH_CREATED:      'batch.created',
-  BATCH_STATUS_CHANGED: 'batch.status_changed',
-  ACTIVITY_CREATED:   'activity.created',
-  INSPECTION_SIGNED:  'inspection.signed',
-  QR_GENERATED:       'qr.generated',
+// Audit action codes — used as `action` field in audit_logs table.
+// Naming: <DOMAIN>_<EVENT> uppercase, stable identifiers (don't rename without migration).
+export const AUDIT_ACTIONS = {
+  // Auth / session
+  USER_REGISTERED:        'USER_REGISTERED',
+  USER_LOGIN:             'USER_LOGIN',
+  USER_LOGOUT:            'USER_LOGOUT',
+  USER_PROFILE_UPDATED:   'USER_PROFILE_UPDATED',
+  JWT_KEY_ROTATED:        'JWT_KEY_ROTATED',
+  // User admin CRUD
+  USER_CREATED:           'USER_CREATED',
+  USER_UPDATED:           'USER_UPDATED',
+  USER_DELETED:           'USER_DELETED',
+  USER_KEY_GENERATED:     'USER_KEY_GENERATED',
+  USER_KEY_REVOKED:       'USER_KEY_REVOKED',
+  // Farm
+  FARM_CREATED:           'FARM_CREATED',
+  FARM_UPDATED:           'FARM_UPDATED',
+  FARM_DELETED:           'FARM_DELETED',
+  CERT_REQUESTED:         'CERT_REQUESTED',
+  CERT_APPROVED:          'CERT_APPROVED',
+  CERT_REJECTED:          'CERT_REJECTED',
+  // Crop
+  CROP_CREATED:           'CROP_CREATED',
+  CROP_UPDATED:           'CROP_UPDATED',
+  CROP_DELETED:           'CROP_DELETED',
+  // Batch
+  BATCH_CREATED:          'BATCH_CREATED',
+  BATCH_UPDATED:          'BATCH_UPDATED',
+  BATCH_DELETED:          'BATCH_DELETED',
+  BATCH_STATUS_CHANGED:   'BATCH_STATUS_CHANGED',
+  // Activity log
+  ACTIVITY_CREATED:       'ACTIVITY_CREATED',
+  ACTIVITY_UPDATED:       'ACTIVITY_UPDATED',
+  ACTIVITY_DELETED:       'ACTIVITY_DELETED',
+  ACTIVITY_SIGNED:        'ACTIVITY_SIGNED',
+  // Inspection
+  INSPECTION_CREATED:     'INSPECTION_CREATED',
+  INSPECTION_UPDATED:     'INSPECTION_UPDATED',
+  INSPECTION_DELETED:     'INSPECTION_DELETED',
+  INSPECTION_SIGNED:      'INSPECTION_SIGNED',
+  // Media
+  MEDIA_UPLOADED:         'MEDIA_UPLOADED',
+  MEDIA_DELETED:          'MEDIA_DELETED',
 } as const;
 
-// RabbitMQ Queue names
-export const QUEUES = {
-  AUDIT_EVENTS: 'audit.events',
-} as const;
+export type AuditActionCode = typeof AUDIT_ACTIONS[keyof typeof AUDIT_ACTIONS];
