@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
+import { AuditController } from './audit.controller';
+import { AuditService } from './audit.service';
 
-/**
- * AuditModule trong API Gateway chỉ là placeholder.
- * Entities và business logic nằm trong audit-service.
- * Mở rộng sau khi audit-service được implement gRPC.
- */
+// AuditModule — module chứa AuditController (nếu cần)
+//  và AuditService để các module khác có thể inject và gọi trực tiếp (nếu cần).
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [],
-  exports: [],
+  controllers: [AuditController],
+  providers: [AuditService],
+  exports: [AuditService],
 })
 export class AuditModule {}

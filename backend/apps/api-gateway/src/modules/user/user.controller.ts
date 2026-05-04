@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
-import { Roles } from '../../common/decorators';
+import { Roles, Auditable } from '../../common/decorators';
 import { Role } from '../../common/enums';
+import { AUDIT_ACTIONS } from '@app/shared';
 
 import { UserService } from './user.service';
 
@@ -15,18 +16,21 @@ export class UserController {
   }
 
   @Roles(Role.ADMIN)
+  @Auditable(AUDIT_ACTIONS.USER_CREATED, { entityType: 'User' })
   @Post()
   create(@Body() dto: any) {
     return this.userService.create(dto);
   }
 
   @Roles(Role.ADMIN)
+  @Auditable(AUDIT_ACTIONS.USER_UPDATED, { entityType: 'User', entityIdParam: 'id' })
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: any) {
     return this.userService.update(id, dto);
   }
 
   @Roles(Role.ADMIN)
+  @Auditable(AUDIT_ACTIONS.USER_DELETED, { entityType: 'User', entityIdParam: 'id' })
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.delete(id);

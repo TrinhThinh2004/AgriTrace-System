@@ -19,8 +19,10 @@ import {
   Roles,
   InspectorOnly,
   Public,
+  Auditable,
 } from '../../../common/decorators';
 import { Role } from '../../../common/enums';
+import { AUDIT_ACTIONS } from '@app/shared';
 
 @Controller()
 export class InspectionController {
@@ -30,6 +32,7 @@ export class InspectionController {
   // Ở đây farmer sở hữu batch không liên quan — inspector được phép tạo trên mọi batch,
   // nên KHÔNG dùng @OwnsBatch. Chỉ cần @InspectorOnly.
   @InspectorOnly()
+  @Auditable(AUDIT_ACTIONS.INSPECTION_CREATED, { entityType: 'Inspection' })
   @Post('batches/:id/inspections')
   create(
     @Param('id') batchId: string,
@@ -73,6 +76,7 @@ export class InspectionController {
 
   // ─── Inspector update (tự check quyền trong service) ───
   @InspectorOnly()
+  @Auditable(AUDIT_ACTIONS.INSPECTION_UPDATED, { entityType: 'Inspection', entityIdParam: 'id' })
   @Patch('inspections/:id')
   update(
     @Param('id') id: string,
@@ -84,6 +88,7 @@ export class InspectionController {
 
   // ─── Inspector delete (chỉ nếu chưa ký) ───
   @InspectorOnly()
+  @Auditable(AUDIT_ACTIONS.INSPECTION_DELETED, { entityType: 'Inspection', entityIdParam: 'id' })
   @Delete('inspections/:id')
   delete(@Param('id') id: string, @CurrentUser() user: any) {
     return this.service.delete(id, user);
@@ -91,6 +96,7 @@ export class InspectionController {
 
   // ─── Inspector ký inspection (store-only) ───
   @InspectorOnly()
+  @Auditable(AUDIT_ACTIONS.INSPECTION_SIGNED, { entityType: 'Inspection', entityIdParam: 'id' })
   @Post('inspections/:id/sign')
   sign(
     @Param('id') id: string,

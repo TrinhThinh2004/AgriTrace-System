@@ -12,7 +12,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import 'multer';
-import { CurrentUser } from '../../common/decorators';
+import { CurrentUser, Auditable } from '../../common/decorators';
+import { AUDIT_ACTIONS } from '@app/shared';
 
 type MulterFile = Express.Multer.File;
 
@@ -25,6 +26,7 @@ import { MediaService } from './media.service';
 export class MediaController {
   constructor(private readonly media: MediaService) {}
 
+  @Auditable(AUDIT_ACTIONS.MEDIA_UPLOADED, { entityType: 'Media' })
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async upload(
@@ -80,6 +82,7 @@ export class MediaController {
     });
   }
 
+  @Auditable(AUDIT_ACTIONS.MEDIA_DELETED, { entityType: 'Media', entityIdParam: 'id' })
   @Delete(':id')
   async remove(
     @Param('id') id: string,

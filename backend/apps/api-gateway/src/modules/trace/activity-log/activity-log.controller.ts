@@ -20,8 +20,10 @@ import {
   FarmerOnly,
   OwnsBatch,
   Public,
+  Auditable,
 } from '../../../common/decorators';
 import { Role } from '../../../common/enums';
+import { AUDIT_ACTIONS } from '@app/shared';
 
 @Controller()
 export class ActivityLogController {
@@ -30,6 +32,7 @@ export class ActivityLogController {
   // ─── Farmer tạo log dưới batch mình sở hữu ───
   @FarmerOnly()
   @OwnsBatch('id')
+  @Auditable(AUDIT_ACTIONS.ACTIVITY_CREATED, { entityType: 'ActivityLog' })
   @Post('batches/:id/activity-logs')
   create(
     @Param('id') batchId: string,
@@ -72,6 +75,7 @@ export class ActivityLogController {
 
   // ─── Farmer update (service tự self-check ownership) ───
   @FarmerOnly()
+  @Auditable(AUDIT_ACTIONS.ACTIVITY_UPDATED, { entityType: 'ActivityLog', entityIdParam: 'id' })
   @Patch('activity-logs/:id')
   update(
     @Param('id') id: string,
@@ -83,6 +87,7 @@ export class ActivityLogController {
 
   // ─── Farmer delete (chỉ nếu chưa ký) ───
   @FarmerOnly()
+  @Auditable(AUDIT_ACTIONS.ACTIVITY_DELETED, { entityType: 'ActivityLog', entityIdParam: 'id' })
   @Delete('activity-logs/:id')
   delete(@Param('id') id: string, @CurrentUser() user: any) {
     return this.service.delete(id, user);
@@ -90,6 +95,7 @@ export class ActivityLogController {
 
   // ─── Farmer ký activity log (chữ ký số, store-only) ───
   @FarmerOnly()
+  @Auditable(AUDIT_ACTIONS.ACTIVITY_SIGNED, { entityType: 'ActivityLog', entityIdParam: 'id' })
   @Post('activity-logs/:id/sign')
   sign(
     @Param('id') id: string,

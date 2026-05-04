@@ -57,6 +57,21 @@ import { OwnershipGuard } from './guards/ownership.guard';
           },
         }),
       },
+      {
+        name: 'AUDIT_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.GRPC,
+          options: {
+            url:
+              config.get<string>('AUDIT_SERVICE_GRPC_URL') ?? 'localhost:50055',
+            package: 'audit',
+            protoPath: join(process.cwd(), 'libs/shared/proto/audit.proto'),
+            loader: { keepCase: true },
+          },
+        }),
+      },
     ]),
   ],
   providers: [OwnershipGuard],

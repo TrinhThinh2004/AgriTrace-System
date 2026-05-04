@@ -10,7 +10,8 @@ import {
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { Observable, firstValueFrom } from 'rxjs';
-import { AdminOnly } from '../../common/decorators';
+import { AdminOnly, Auditable } from '../../common/decorators';
+import { AUDIT_ACTIONS } from '@app/shared';
 import { GatewayJwtKeyService } from './gateway-jwt-key.service';
 
 interface JwtKeyDto {
@@ -57,6 +58,7 @@ export class AdminJwtKeyController implements OnModuleInit {
   }
 
   @AdminOnly()
+  @Auditable(AUDIT_ACTIONS.JWT_KEY_ROTATED, { entityType: 'JwtKey' })
   @Post('rotate')
   async rotate(@Body() body: { purpose: 'access' | 'refresh' }) {
     if (!body?.purpose || !['access', 'refresh'].includes(body.purpose)) {

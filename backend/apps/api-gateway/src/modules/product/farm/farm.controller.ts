@@ -16,14 +16,16 @@ import {
   RejectCertificationDto,
   ApproveCertificationDto,
 } from './dto';
-import { CurrentUser, Roles, OwnsFarm } from '../../../common/decorators';
+import { CurrentUser, Roles, OwnsFarm, Auditable } from '../../../common/decorators';
 import { Role } from '../../../common/enums';
+import { AUDIT_ACTIONS } from '@app/shared';
 
 @Controller('farms')
 export class FarmController {
   constructor(private readonly service: FarmService) {}
 
   @Roles(Role.ADMIN, Role.FARMER)
+  @Auditable(AUDIT_ACTIONS.FARM_CREATED, { entityType: 'Farm' })
   @Post()
   create(@Body() dto: CreateFarmDto, @CurrentUser() user: any) {
     return this.service.create(dto, user);
@@ -53,6 +55,7 @@ export class FarmController {
   }
 
   @OwnsFarm('id')
+  @Auditable(AUDIT_ACTIONS.FARM_UPDATED, { entityType: 'Farm', entityIdParam: 'id' })
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -63,6 +66,7 @@ export class FarmController {
   }
 
   @OwnsFarm('id')
+  @Auditable(AUDIT_ACTIONS.FARM_DELETED, { entityType: 'Farm', entityIdParam: 'id' })
   @Delete(':id')
   delete(@Param('id') id: string, @CurrentUser() user: any) {
     return this.service.delete(id, user);
@@ -70,6 +74,7 @@ export class FarmController {
 
   // Farmer (owner) hoặc Admin gửi yêu cầu cấp chứng nhận
   @OwnsFarm('id')
+  @Auditable(AUDIT_ACTIONS.CERT_REQUESTED, { entityType: 'Farm', entityIdParam: 'id' })
   @Post(':id/certification-request')
   requestCertification(
     @Param('id') id: string,
@@ -80,6 +85,7 @@ export class FarmController {
   }
 
   @Roles(Role.ADMIN)
+  @Auditable(AUDIT_ACTIONS.CERT_APPROVED, { entityType: 'Farm', entityIdParam: 'id' })
   @Post(':id/certification/approve')
   approveCertification(
     @Param('id') id: string,
@@ -90,6 +96,7 @@ export class FarmController {
   }
 
   @Roles(Role.ADMIN)
+  @Auditable(AUDIT_ACTIONS.CERT_REJECTED, { entityType: 'Farm', entityIdParam: 'id' })
   @Post(':id/certification/reject')
   rejectCertification(
     @Param('id') id: string,

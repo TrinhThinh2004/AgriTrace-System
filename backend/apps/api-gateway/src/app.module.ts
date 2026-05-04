@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { REDIS_CLIENT, RedisModule } from '@app/shared';
@@ -17,6 +17,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 
 import { JwtAuthGuard, RolesGuard, OwnershipGuard } from './common/guards';
 import { PolicyModule } from './common/policy.module';
+import { AuditableInterceptor } from './common/interceptors/auditable.interceptor';
 
 @Module({
   imports: [
@@ -52,6 +53,9 @@ import { PolicyModule } from './common/policy.module';
     { provide: APP_GUARD, useClass: RolesGuard },
     // ABAC: kiểm tra ownership theo @OwnsFarm() / @OwnsBatch().
     { provide: APP_GUARD, useClass: OwnershipGuard },
+    // Audit log: ghi mọi handler có @Auditable() vào audit-service (fire-and-forget).
+    // Đặt sau guards để chỉ audit request đã pass authn/authz.
+    { provide: APP_INTERCEPTOR, useClass: AuditableInterceptor },
     // Chuyển gRPC errors từ microservices → HTTP response codes
     { provide: APP_FILTER, useClass: GrpcToHttpExceptionFilter },
   ],

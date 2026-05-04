@@ -14,8 +14,9 @@ import * as QRCode from 'qrcode';
 import { ConfigService } from '@nestjs/config';
 import { BatchService } from './batch.service';
 import { CreateBatchDto, UpdateBatchDto, TransitionBatchDto } from './dto';
-import { CurrentUser, Roles, OwnsBatch, FarmerOnly, Public } from '../../../common/decorators';
+import { CurrentUser, Roles, OwnsBatch, FarmerOnly, Public, Auditable } from '../../../common/decorators';
 import { Role } from '../../../common/enums';
+import { AUDIT_ACTIONS } from '@app/shared';
 
 @Controller('batches')
 export class BatchController {
@@ -25,6 +26,7 @@ export class BatchController {
   ) {}
   // Endpoint để tạo batch mới, chỉ farmer được phép tạo batch cho farm của họ
   @FarmerOnly()
+  @Auditable(AUDIT_ACTIONS.BATCH_CREATED, { entityType: 'Batch' })
   @Post()
   create(@Body() dto: CreateBatchDto, @CurrentUser() user: any) {
     return this.service.create(dto, user);
@@ -49,6 +51,7 @@ export class BatchController {
   }
   // Endpoint để cập nhật thông tin batch, chỉ owner (farmer) mới được phép chỉnh sửa
   @OwnsBatch('id')
+  @Auditable(AUDIT_ACTIONS.BATCH_UPDATED, { entityType: 'Batch', entityIdParam: 'id' })
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -60,6 +63,7 @@ export class BatchController {
   // Endpoint để chuyển trạng thái batch
   @Roles(Role.ADMIN,Role.INSPECTOR, Role.FARMER)
   @OwnsBatch('id')
+  @Auditable(AUDIT_ACTIONS.BATCH_STATUS_CHANGED, { entityType: 'Batch', entityIdParam: 'id' })
   @Post(':id/transition')
   transitionStatus(
     @Param('id') id: string,
@@ -70,6 +74,7 @@ export class BatchController {
   }
   // Endpoint để xóa batch, chỉ owner (farmer) mới được phép xóa batch của mình
   @OwnsBatch('id')
+  @Auditable(AUDIT_ACTIONS.BATCH_DELETED, { entityType: 'Batch', entityIdParam: 'id' })
   @Delete(':id')
   delete(@Param('id') id: string, @CurrentUser() user: any) {
     return this.service.delete(id, user);

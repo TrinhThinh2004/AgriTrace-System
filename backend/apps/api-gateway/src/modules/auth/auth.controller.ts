@@ -14,7 +14,8 @@ import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, UpdateProfileDto } from './dto';
-import { CurrentUser, Public } from '../../common/decorators';
+import { CurrentUser, Public, Auditable } from '../../common/decorators';
+import { AUDIT_ACTIONS } from '@app/shared';
 
 // Limit chặt cho endpoint nhạy cảm (register/login) để giảm thiểu rủi ro brute-force.
 // 100 request mỗi 60 giây cho mỗi IP.
@@ -43,6 +44,7 @@ export class AuthController {
   // post /auth/register
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Auditable(AUDIT_ACTIONS.USER_REGISTERED, { entityType: 'User' })
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
@@ -56,6 +58,7 @@ export class AuthController {
   // post /auth/login
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Auditable(AUDIT_ACTIONS.USER_LOGIN, { entityType: 'User' })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -85,6 +88,7 @@ export class AuthController {
   }
 
   // post /auth/logout — vô hiệu hoá access token (jti blacklist) + xoá refresh hash
+  @Auditable(AUDIT_ACTIONS.USER_LOGOUT, { entityType: 'User' })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
@@ -102,6 +106,7 @@ export class AuthController {
   }
 
   // patch /auth/profile
+  @Auditable(AUDIT_ACTIONS.USER_PROFILE_UPDATED, { entityType: 'User' })
   @Patch('profile')
   async updateProfile(
     @CurrentUser('id') userId: string,
