@@ -1,0 +1,230 @@
+{
+  "contractName": "AgriTraceAnchor",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidRange",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidRoot",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NotOwner",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "anchorId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "merkleRoot",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "fromSeq",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "toSeq",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "by",
+          "type": "address"
+        }
+      ],
+      "name": "AnchorStored",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "anchors",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "merkleRoot",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "fromSeq",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "toSeq",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "anchorId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAnchor",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "merkleRoot",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "fromSeq",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "toSeq",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct AgriTraceAnchor.Anchor",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastAnchorId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "root",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "fromSeq",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "toSeq",
+          "type": "uint256"
+        }
+      ],
+      "name": "storeAnchor",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "anchorId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b50600280546001600160a01b031916339081179091556040516000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3610448806100606000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c8063368b733e146100675780634c7df18f146100c15780635a41efd9146101075780638da5cb5b14610128578063b269a9e214610153578063f2fde38b1461015c575b600080fd5b61009c61007536600461039d565b60006020819052908152604090208054600182015460028301546003909301549192909184565b6040805194855260208501939093529183015260608201526080015b60405180910390f35b6100d46100cf36600461039d565b610171565b6040516100b891908151815260208083015190820152604080830151908201526060918201519181019190915260800190565b61011a6101153660046103b6565b6101e2565b6040519081526020016100b8565b60025461013b906001600160a01b031681565b6040516001600160a01b0390911681526020016100b8565b61011a60015481565b61016f61016a3660046103e2565b6102ef565b005b61019f6040518060800160405280600080191681526020016000815260200160008152602001600081525090565b5060009081526020818152604091829020825160808101845281548152600182015492810192909252600281015492820192909252600390910154606082015290565b6002546000906001600160a01b03163314610210576040516330cd747160e01b815260040160405180910390fd5b8361022e5760405163504570e360e01b815260040160405180910390fd5b8282101561024f5760405163561ce9bb60e01b815260040160405180910390fd5b50600180548101808255604080516080810182528681526020808201878152828401878152426060808601918252600088815280865287902095518655925197850197909755516002840155945160039092019190915581518781529081018690529081018490529091339183917ff44439ade8f28f7d44e1d8675753ba6e67bb0ed37bdd2f209a40e81c6b185be8910160405180910390a39392505050565b6002546001600160a01b0316331461031a576040516330cd747160e01b815260040160405180910390fd5b6001600160a01b0381166103415760405163e6c4247b60e01b815260040160405180910390fd5b6002546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3600280546001600160a01b0319166001600160a01b0392909216919091179055565b6000602082840312156103af57600080fd5b5035919050565b6000806000606084860312156103cb57600080fd5b505081359360208301359350604090920135919050565b6000602082840312156103f457600080fd5b81356001600160a01b038116811461040b57600080fd5b939250505056fea26469706673582212208952c98ae04a5de35752f992ff364cc41ebaedc4a90b51fd139d86a66c5203e064736f6c63430008180033"
+}

@@ -2,3 +2,4 @@
 export * from './enums';
 export * from './types';
 export * from './redis';
+export * from './blockchain';
