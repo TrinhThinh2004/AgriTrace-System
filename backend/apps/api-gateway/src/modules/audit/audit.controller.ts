@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { Roles } from '../../common/decorators';
 import { Role } from '../../common/enums';
 import { AuditService } from './audit.service';
@@ -12,6 +12,15 @@ export class AuditController {
   @Get()
   list(@Query() query: ListAuditDto) {
     return this.service.list(query);
+  }
+
+  /**
+   * Dev endpoint — chạy anchor cron ngay lập tức thay vì đợi @Cron('0 * * * *').
+   * Tiện cho demo + test integration.
+   */
+  @Post('_dev/anchor-now')
+  triggerAnchor() {
+    return this.service.triggerAnchor();
   }
   // lấy chi tiết log audit theo seq_no
   @Get('anchors')

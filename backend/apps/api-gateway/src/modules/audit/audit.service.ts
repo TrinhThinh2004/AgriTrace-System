@@ -9,6 +9,7 @@ interface AuditGrpcService {
   verifyLog(req: { seq_no: string }): Observable<any>;
   listAnchors(req: ListAnchorsDto): Observable<any>;
   getAnchor(req: { id: string }): Observable<any>;
+  triggerAnchor(req: Record<string, never>): Observable<any>;
 }
 
 @Injectable()
@@ -39,5 +40,10 @@ export class AuditService implements OnModuleInit {
 
   getAnchor(id: string) {
     return firstValueFrom(this.grpc.getAnchor({ id }));
+  }
+
+  /** Dev/demo only — chạy anchor cron thủ công thay vì đợi @Cron('0 * * * *'). */
+  triggerAnchor() {
+    return firstValueFrom(this.grpc.triggerAnchor({}));
   }
 }

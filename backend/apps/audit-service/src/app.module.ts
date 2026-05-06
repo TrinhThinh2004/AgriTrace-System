@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { AuditModule } from './audit/audit.module';
+import { AnchorModule } from './anchor/anchor.module';
 import { HealthController } from './health.controller';
 import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
 import { GrpcExceptionFilter } from './common/grpc-exception.filter';
@@ -27,7 +29,10 @@ import { GrpcExceptionFilter } from './common/grpc-exception.filter';
       }),
     }),
 
+    ScheduleModule.forRoot(),
+
     AuditModule,
+    AnchorModule,
   ],
   controllers: [HealthController],
   providers: [

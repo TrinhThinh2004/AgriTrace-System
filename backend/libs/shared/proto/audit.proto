@@ -16,6 +16,23 @@ service AuditService {
   // Anchors (on-chain)
   rpc ListAnchors    (ListAnchorsRequest)    returns (ListAnchorsResponse);
   rpc GetAnchor      (IdRequest)             returns (AnchorResponse);
+
+  // Manually trigger anchor cron (dev/demo only — admin gateway).
+  rpc TriggerAnchor  (EmptyRequest)          returns (TriggerAnchorResponse);
+}
+
+message EmptyRequest {}
+
+message TriggerAnchorResponse {
+  bool   skipped       = 1;     // true if no work was done (no logs / lock held / not ready)
+  string reason        = 2;     // human-readable reason if skipped
+  int32  count         = 3;     // number of logs anchored
+  string from_seq      = 4;
+  string to_seq        = 5;
+  string anchor_id     = 6;     // DB id of the new Anchor row
+  string tx_hash       = 7;
+  string block_number  = 8;
+  string merkle_root   = 9;
 }
 
 message IdRequest  { string id = 1; }
