@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import {
   LayoutDashboard, Leaf, ClipboardCheck, QrCode, Building2, Sprout,
-  Users, Shield, Tractor, Package, KeyRound,
+  Users, Shield, Tractor, Package, KeyRound, ScrollText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,7 @@ const menuItems: Record<Role, { title: string; url: string; icon: React.ElementT
     { title: "Người dùng", url: "/users", icon: Users },
     { title: "Tiêu chuẩn", url: "/standards", icon: Shield },
     { title: "Khóa số", url: "/keys", icon: KeyRound },
+    { title: "Audit log", url: "/audit", icon: ScrollText },
   ],
   farmer: [
     { title: "Trang chủ", url: "/dashboard", icon: LayoutDashboard },

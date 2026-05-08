@@ -1,10 +1,12 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, FindOptionsWhere, Repository } from 'typeorm';
+import { Between, DataSource, FindOptionsWhere, LessThan, Repository } from 'typeorm';
 import { AuditLog } from '../entities/audit-log.entity';
 import { Anchor } from '../entities/anchor.entity';
 import { Role } from '@app/shared';
 import { HashChainService, ChainPayload, ZERO_HASH } from './hash-chain.service';
+import { MerkleService } from '../anchor/merkle.service';
+import { BlockchainService } from '../anchor/blockchain.service';
 
 // ngẫu nhiên chọn một khóa số nguyên 64-bit làm advisory lock key để đảm bảo single-writer cho bảng audit
 // Bất kì chương trình ghi audit log nào cũng phải acquire khóa này trước khi ghi.
@@ -40,11 +42,12 @@ export class AuditService {
     @InjectRepository(AuditLog) private readonly logRepo: Repository<AuditLog>,
     @InjectRepository(Anchor) private readonly anchorRepo: Repository<Anchor>,
     private readonly hashChain: HashChainService,
+    private readonly merkle: MerkleService,
+    private readonly blockchain: BlockchainService,
   ) {}
 
   // ── WriteLog ────────────────────────────────────────────────
-  // Single-writer guarantee via Postgres advisory lock so prev_hash → record_hash chain
-  // never forks under concurrent requests.
+  // Đảm bảo tính toàn vẹn của chuỗi hash bằng cách acquire advisory lock trước khi ghi log mới.
   async writeLog(input: WriteLogInput): Promise<AuditLog> {
     if (!input.action) throw new BadRequestException('action is required');
     if (!input.entity_type) throw new BadRequestException('entity_type is required');
@@ -137,4 +140,119 @@ export class AuditService {
     if (!a) throw new NotFoundException(`anchor ${id} not found`);
     return a;
   }
+
+  // ── VerifyLog ───────────────────────────────────────────────
+  // Verify log bằng cách:
+  // 1. Recompute record_hash từ payload và prev_hash, so sánh với record_hash đã lưu
+  // 2. Nếu log đã được anchor, rebuild Merkle tree từ tất cả logs trong dải [from_seq, to_seq], lấy Merkle proof cho log này, và verify proof đó
+  // 3. Nếu blockchain đã init, lấy Merkle root trên chain và so sánh với root trong DB
+  async verifyLog(seqNo: string): Promise<VerifyLogResult> {
+    const log = await this.logRepo.findOne({ where: { seq_no: seqNo } });
+    if (!log) throw new NotFoundException(`audit log seq_no=${seqNo} not found`);
+
+    // 1. Recompute record_hash và verify hash chain
+    const occurredAt =
+      (log.metadata as any)?.occurred_at ?? log.created_at?.toISOString();
+    const payload: ChainPayload = {
+      actor_id: log.actor_id,
+      actor_role: log.actor_role,
+      action: log.action,
+      entity_type: log.entity_type,
+      entity_id: log.entity_id,
+      before_data: log.before_data,
+      after_data: log.after_data,
+      // Loại bỏ field occurred_at khỏi metadata để rebuild ChainPayload đúng. 
+      metadata: this.stripOccurredAt(log.metadata),
+      occurred_at: occurredAt,
+    };
+    const recomputedHash = this.hashChain.computeRecordHash(log.prev_hash, payload);
+    const hashChainValid = recomputedHash === log.record_hash;
+
+    // 2. Nếu log đã được anchor, rebuild Merkle tree từ tất cả logs trong dải [from_seq, to_seq],
+    //  lấy Merkle proof cho log này, và verify proof đó
+    let anchor: Anchor | null = null;
+    let merkleProof: string[] = [];
+    let merkleProofValid = false;
+    let onchainMerkleRoot = '';
+    let onchainRootMatch = false;
+
+    if (log.anchor_id) {
+      anchor = await this.anchorRepo.findOne({ where: { id: log.anchor_id } });
+
+      if (anchor) {
+        // Rebuild Merkle tree từ tất cả logs trong dải [from_seq, to_seq]
+        const peerLogs = await this.logRepo.find({
+          where: {
+            seq_no: Between(anchor.from_seq, anchor.to_seq),
+          },
+          order: { seq_no: 'ASC' },
+          select: ['seq_no', 'record_hash'],
+        });
+        const recordHashes = peerLogs.map((l) => l.record_hash);
+        const { root, tree } = this.merkle.buildTree(recordHashes);
+
+        merkleProof = this.merkle.getProof(tree, log.record_hash);
+        merkleProofValid = this.merkle.verifyProof(
+          root,
+          log.record_hash,
+          merkleProof,
+        );
+
+        // 3. On-chain root match 
+        if (this.blockchain.isReady()) {
+          try {
+            const onchain = await this.blockchain.getAnchorOnchain(
+              BigInt(anchor.onchain_anchor_id),
+            );
+            onchainMerkleRoot = onchain.merkleRoot;
+            onchainRootMatch =
+              onchainMerkleRoot.toLowerCase() ===
+              anchor.merkle_root.toLowerCase();
+          } catch {
+            // RPC fail → giữ default empty + false
+          }
+        }
+      }
+    }
+
+    // prev_log để FE hiển thị link "Xem record trước"
+    const prevLog = await this.logRepo.findOne({
+      where: { seq_no: LessThan(log.seq_no) },
+      order: { seq_no: 'DESC' },
+      select: ['seq_no', 'record_hash'],
+    });
+
+    return {
+      log,
+      recomputed_hash: recomputedHash,
+      hash_chain_valid: hashChainValid,
+      prev_record_hash: prevLog?.record_hash ?? ZERO_HASH,
+      anchor,
+      anchor_present: !!anchor,
+      merkle_proof: merkleProof,
+      merkle_proof_valid: merkleProofValid,
+      onchain_merkle_root: onchainMerkleRoot,
+      onchain_root_match: onchainRootMatch,
+    };
+  }
+
+  // Loại bỏ field occurred_at khỏi metadata để rebuild ChainPayload đúng.
+  private stripOccurredAt(metadata: Record<string, any> | null) {
+    if (!metadata) return null;
+    const { occurred_at: _ignored, ...rest } = metadata;
+    return Object.keys(rest).length > 0 ? rest : null;
+  }
+}
+
+export interface VerifyLogResult {
+  log: AuditLog;
+  recomputed_hash: string;
+  hash_chain_valid: boolean;
+  prev_record_hash: string;
+  anchor: Anchor | null;
+  anchor_present: boolean;
+  merkle_proof: string[];
+  merkle_proof_valid: boolean;
+  onchain_merkle_root: string;
+  onchain_root_match: boolean;
 }

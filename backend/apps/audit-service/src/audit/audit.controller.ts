@@ -10,9 +10,9 @@ interface WriteLogRpcRequest {
   action: string;
   entity_type: string;
   entity_id?: string;
-  before_data?: string; // JSON string
-  after_data?: string;  // JSON string
-  metadata?: string;    // JSON string
+  before_data?: string; 
+  after_data?: string;  
+  metadata?: string;    
   occurred_at?: string;
 }
 
@@ -104,19 +104,30 @@ export class AuditController {
 
   @GrpcMethod('AuditService', 'VerifyLog')
   async verifyLog(req: { seq_no: string }) {
-    // Phase 5 will replace this stub with full chain + Merkle + on-chain verification.
-    const log = await this.service.getLogBySeq(req.seq_no);
+    const r = await this.service.verifyLog(req.seq_no);
     return {
-      log: logToRpc(log),
-      recomputed_hash: '',
-      hash_chain_valid: false,
-      prev_record_hash: '',
-      anchor: anchorToRpc({} as Anchor),
-      anchor_present: false,
-      merkle_proof_valid: false,
-      onchain_merkle_root: '',
-      onchain_root_match: false,
-      merkle_proof: [],
+      log: logToRpc(r.log),
+      recomputed_hash: r.recomputed_hash,
+      hash_chain_valid: r.hash_chain_valid,
+      prev_record_hash: r.prev_record_hash,
+      anchor: r.anchor
+        ? anchorToRpc(r.anchor)
+        : {
+            id: '',
+            merkle_root: '',
+            from_seq: '',
+            to_seq: '',
+            tx_hash: '',
+            block_number: '',
+            chain_id: 0,
+            onchain_anchor_id: '',
+            anchored_at: '',
+          },
+      anchor_present: r.anchor_present,
+      merkle_proof_valid: r.merkle_proof_valid,
+      onchain_merkle_root: r.onchain_merkle_root,
+      onchain_root_match: r.onchain_root_match,
+      merkle_proof: r.merkle_proof,
     };
   }
 
