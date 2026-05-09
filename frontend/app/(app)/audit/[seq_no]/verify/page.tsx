@@ -78,16 +78,15 @@ export default function VerifyAuditLogPage() {
   const {
     log,
     anchor,
-    anchor_present,
-    hash_chain_valid,
-    recomputed_hash,
-    prev_record_hash,
-    merkle_proof_valid,
-    onchain_merkle_root,
-    onchain_root_match,
+    anchor_present = false,
+    hash_chain_valid = false,
+    recomputed_hash = "",
+    prev_record_hash = "",
+    merkle_proof = [],
+    merkle_proof_valid = false,
+    onchain_merkle_root = "",
+    onchain_root_match = false,
   } = data;
-  // gRPC repeated field rỗng có thể trả về undefined → default về []
-  const merkle_proof = data.merkle_proof ?? [];
 
   const overallOk =
     hash_chain_valid && (!anchor_present || (merkle_proof_valid && onchain_root_match));

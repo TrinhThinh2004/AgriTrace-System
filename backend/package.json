@@ -28,7 +28,9 @@
     "seed:fresh": "ts-node -r tsconfig-paths/register seeds/index.ts --fresh",
     "seed:users": "ts-node -r tsconfig-paths/register seeds/user.seed.ts",
     "seed:products": "ts-node -r tsconfig-paths/register seeds/product.seed.ts",
-    "seed:traces": "ts-node -r tsconfig-paths/register seeds/trace.seed.ts"
+    "seed:traces": "ts-node -r tsconfig-paths/register seeds/trace.seed.ts",
+    "demo:tampering": "ts-node -r tsconfig-paths/register scripts/demo-tampering.ts",
+    "demo:restore": "ts-node -r tsconfig-paths/register scripts/restore-audit.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
