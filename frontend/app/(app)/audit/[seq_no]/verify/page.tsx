@@ -248,7 +248,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="wrap-break-word">{value}</p>
+      <div className="wrap-break-word">{value}</div>
     </div>
   );
 }
