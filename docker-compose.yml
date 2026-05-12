@@ -106,6 +106,24 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: agritrace-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-agritrace}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-agritrace_pass123}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   user_db_data:
   product_db_data:
@@ -113,3 +131,4 @@ volumes:
   media_db_data:
   audit_db_data:
   redis_data:
+  rabbitmq_data:

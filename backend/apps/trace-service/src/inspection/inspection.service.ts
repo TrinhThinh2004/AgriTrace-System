@@ -11,9 +11,17 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientGrpc } from '@nestjs/microservices';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { firstValueFrom, Observable } from 'rxjs';
 import { Inspection } from '../entities/inspection.entity';
-import { InspectionType, InspectionResult, NotificationType } from '@app/shared';
+import {
+  InspectionType,
+  InspectionResult,
+  NotificationType,
+  RABBIT_EXCHANGE,
+  NOTIFICATION_DISPATCH_ROUTING_KEY,
+  NotificationDispatchMessage,
+} from '@app/shared';
 import {
   CreateInspectionDto,
   UpdateInspectionDto,
@@ -24,17 +32,6 @@ import {
 interface ProductServiceGrpc {
   getBatchById(data: { batch_id: string }): Observable<any>;
   getFarmById(data: { farm_id: string }): Observable<any>;
-}
-
-interface UserServiceGrpc {
-  createNotification(data: {
-    user_id: string;
-    type: string;
-    title: string;
-    message: string;
-    link?: string;
-    data?: string;
-  }): Observable<any>;
 }
 
 interface CallerCtx {
@@ -79,20 +76,17 @@ function validateScheduledVsConducted(
 export class InspectionService implements OnModuleInit {
   private readonly logger = new Logger(InspectionService.name);
   private productService!: ProductServiceGrpc;
-  private userService!: UserServiceGrpc;
 
   constructor(
     @InjectRepository(Inspection)
     private readonly repo: Repository<Inspection>,
     @Inject('PRODUCT_SERVICE') private readonly productClient: ClientGrpc,
-    @Inject('USER_SERVICE') private readonly userClient: ClientGrpc,
+    private readonly amqp: AmqpConnection,
   ) {}
 
   onModuleInit() {
     this.productService =
       this.productClient.getService<ProductServiceGrpc>('ProductService');
-    this.userService =
-      this.userClient.getService<UserServiceGrpc>('UserService');
   }
 
   // Lấy owner_id (Farmer) của batch để gửi notification
@@ -114,7 +108,9 @@ export class InspectionService implements OnModuleInit {
     }
   }
 
-  // Notify owner (Farmer) về sự kiện liên quan đến inspection
+  // Notify owner (Farmer) về sự kiện liên quan đến inspection.
+  // Publish event lên RabbitMQ thay vì gọi gRPC blocking — user-service consume bất đồng bộ.
+  // Nếu user-service down, message nằm trong queue đến khi service lên lại.
   private async notifyOwner(
     batchId: string,
     inspectionId: string,
@@ -125,19 +121,23 @@ export class InspectionService implements OnModuleInit {
     try {
       const ownerId = await this.findBatchOwner(batchId);
       if (!ownerId) return;
-      await firstValueFrom(
-        this.userService.createNotification({
-          user_id: ownerId,
-          type,
-          title,
-          message,
-          link: `/batch/${batchId}`,
-          data: JSON.stringify({ batch_id: batchId, inspection_id: inspectionId }),
-        }),
+      const payload: NotificationDispatchMessage = {
+        user_id: ownerId,
+        type,
+        title,
+        message,
+        link: `/batch/${batchId}`,
+        data: JSON.stringify({ batch_id: batchId, inspection_id: inspectionId }),
+      };
+      await this.amqp.publish(
+        RABBIT_EXCHANGE,
+        NOTIFICATION_DISPATCH_ROUTING_KEY,
+        payload,
+        { persistent: true, contentType: 'application/json' },
       );
     } catch (err) {
       this.logger.warn(
-        `Notify failed for batch ${batchId}: ${(err as Error).message}`,
+        `Notify publish failed for batch ${batchId}: ${(err as Error).message}`,
       );
     }
   }

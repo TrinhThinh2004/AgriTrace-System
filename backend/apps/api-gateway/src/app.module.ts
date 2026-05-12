@@ -3,7 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
-import { REDIS_CLIENT, RedisModule } from '@app/shared';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { REDIS_CLIENT, RedisModule, RABBIT_EXCHANGE, RABBIT_DLX } from '@app/shared';
 import type Redis from 'ioredis';
 import { GrpcToHttpExceptionFilter } from './common/filters/grpc-to-http-exception.filter';
 
@@ -23,6 +24,18 @@ import { AuditableInterceptor } from './common/interceptors/auditable.intercepto
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     RedisModule,
+    RabbitMQModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.getOrThrow<string>('RABBITMQ_URL'),
+        exchanges: [
+          { name: RABBIT_EXCHANGE, type: 'topic' },
+          { name: RABBIT_DLX, type: 'topic' },
+        ],
+        connectionInitOptions: { wait: false }, // không block app startup nếu broker chưa sẵn sàng
+      }),
+    }),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService, REDIS_CLIENT],
       useFactory: (config: ConfigService, redis: Redis) => ({

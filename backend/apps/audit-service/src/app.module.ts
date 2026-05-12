@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { RABBIT_EXCHANGE, RABBIT_DLX } from '@app/shared';
 import { AuditModule } from './audit/audit.module';
 import { AnchorModule } from './anchor/anchor.module';
 import { HealthController } from './health.controller';
@@ -30,6 +32,19 @@ import { GrpcExceptionFilter } from './common/grpc-exception.filter';
     }),
 
     ScheduleModule.forRoot(),
+
+    RabbitMQModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.getOrThrow<string>('RABBITMQ_URL'),
+        exchanges: [
+          { name: RABBIT_EXCHANGE, type: 'topic' },
+          { name: RABBIT_DLX, type: 'topic' },
+        ],
+        connectionInitOptions: { wait: false },
+      }),
+    }),
 
     AuditModule,
     AnchorModule,

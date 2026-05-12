@@ -1,32 +1,19 @@
 import {
   CallHandler,
   ExecutionContext,
-  Inject,
   Injectable,
   Logger,
   NestInterceptor,
-  OnModuleInit,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ClientGrpc } from '@nestjs/microservices';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Observable, tap } from 'rxjs';
+import {
+  RABBIT_EXCHANGE,
+  AUDIT_LOG_ROUTING_KEY,
+  AuditLogMessage,
+} from '@app/shared';
 import { AUDITABLE_KEY, AuditableMeta } from '../decorators/auditable.decorator';
-
-interface AuditGrpcService {
-  writeLog(payload: WriteLogPayload): Observable<unknown>;
-}
-
-interface WriteLogPayload {
-  actor_id: string;
-  actor_role: string;
-  action: string;
-  entity_type: string;
-  entity_id: string;
-  before_data: string;
-  after_data: string;
-  metadata: string;
-  occurred_at: string;
-}
 
 const SENSITIVE_KEY_HINTS = [
   'password',
@@ -75,18 +62,13 @@ function safeStringify(value: unknown): string {
 }
 
 @Injectable()
-export class AuditableInterceptor implements NestInterceptor, OnModuleInit {
+export class AuditableInterceptor implements NestInterceptor {
   private readonly logger = new Logger(AuditableInterceptor.name);
-  private auditGrpc!: AuditGrpcService;
 
   constructor(
     private readonly reflector: Reflector,
-    @Inject('AUDIT_SERVICE') private readonly client: ClientGrpc,
+    private readonly amqp: AmqpConnection,
   ) {}
-
-  onModuleInit() {
-    this.auditGrpc = this.client.getService<AuditGrpcService>('AuditService');
-  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== 'http') return next.handle();
@@ -101,24 +83,22 @@ export class AuditableInterceptor implements NestInterceptor, OnModuleInit {
 
     return next.handle().pipe(
       tap((response) => {
-        try {
-          this.dispatch(meta, req, response);
-        } catch (err: any) {
-          this.logger.warn(`audit dispatch failed: ${err?.message ?? err}`);
-        }
+        // dispatch async, không block response. Lỗi publish sẽ tự log trong dispatch().
+        void this.dispatch(meta, req, response);
       }),
     );
   }
 
-  // Hàm dispatch để gửi log audit đến audit-service qua gRPC
-  private dispatch(meta: AuditableMeta, req: any, response: any) {
+  // Publish audit log lên RabbitMQ (persistent queue). audit-service consume bất đồng bộ.
+  // Nếu broker tạm down, AmqpConnection sẽ buffer message và publish khi reconnect.
+  private async dispatch(meta: AuditableMeta, req: any, response: any) {
     const user = req.user ?? {};
     const entityIdFromParam = meta.entityIdParam ? req.params?.[meta.entityIdParam] : undefined;
     const entityIdFromResponse =
       response && typeof response === 'object' && 'id' in response ? (response as any).id : null;
     const entityId = String(entityIdFromParam ?? entityIdFromResponse ?? '');
 
-    const payload: WriteLogPayload = {
+    const payload: AuditLogMessage = {
       actor_id: String(user.id ?? ''),
       actor_role: String(user.role ?? ''),
       action: meta.action,
@@ -138,12 +118,15 @@ export class AuditableInterceptor implements NestInterceptor, OnModuleInit {
       occurred_at: new Date().toISOString(),
     };
 
-    // Gửi payload đến audit-service qua gRPC, không cần chờ phản hồi
-    this.auditGrpc.writeLog(payload).subscribe({
-      error: (e) =>
-        this.logger.warn(
-          `WriteLog ${meta.action} failed: ${e?.message ?? e?.code ?? 'unknown'}`,
-        ),
-    });
+    try {
+      await this.amqp.publish(RABBIT_EXCHANGE, AUDIT_LOG_ROUTING_KEY, payload, {
+        persistent: true,
+        contentType: 'application/json',
+      });
+    } catch (err: any) {
+      this.logger.warn(
+        `audit publish ${meta.action} failed: ${err?.message ?? err}`,
+      );
+    }
   }
 }

@@ -33,6 +33,7 @@
     "demo:restore": "ts-node -r tsconfig-paths/register scripts/restore-audit.ts"
   },
   "dependencies": {
+    "@golevelup/nestjs-rabbitmq": "^9.0.0",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@nest-lab/throttler-storage-redis": "^1.2.0",
@@ -49,6 +50,7 @@
     "@nestjs/typeorm": "^11.0.1",
     "@nestjs/websockets": "^11.1.19",
     "@types/qrcode": "^1.5.6",
+    "amqplib": "^2.0.1",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",

@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { RABBIT_EXCHANGE, RABBIT_DLX } from '@app/shared';
 import { TraceModule } from './trace/trace.module';
 import { HealthController } from './health.controller';
 import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
@@ -25,6 +27,19 @@ import { GrpcExceptionFilter } from './common/grpc-exception.filter';
         autoLoadEntities: true,
         synchronize: true, 
         logging: ['error'],
+      }),
+    }),
+
+    RabbitMQModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.getOrThrow<string>('RABBITMQ_URL'),
+        exchanges: [
+          { name: RABBIT_EXCHANGE, type: 'topic' },
+          { name: RABBIT_DLX, type: 'topic' },
+        ],
+        connectionInitOptions: { wait: false },
       }),
     }),
 
