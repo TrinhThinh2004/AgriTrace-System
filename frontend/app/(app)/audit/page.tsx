@@ -362,7 +362,7 @@ export default function AuditLogPage() {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Anchor status</p>
-                  <p>{detailLog.anchor_id ? <Badge className="bg-emerald-600">Anchored</Badge> : <Badge variant="secondary">Pending</Badge>}</p>
+                  <div>{detailLog.anchor_id ? <Badge className="bg-emerald-600">Anchored</Badge> : <Badge variant="secondary">Pending</Badge>}</div>
                 </div>
               </div>
 

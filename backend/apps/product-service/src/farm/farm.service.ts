@@ -4,14 +4,11 @@ import {
   BadRequestException,
   ForbiddenException,
   ConflictException,
-  Inject,
-  OnModuleInit,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ClientGrpc } from '@nestjs/microservices';
-import { firstValueFrom, Observable } from 'rxjs';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Farm } from '../entities/farm.entity';
 import { Batch } from '../entities/batch.entity';
 import {
@@ -19,6 +16,9 @@ import {
   FarmStatus,
   Role,
   NotificationType,
+  RABBIT_EXCHANGE,
+  NOTIFICATION_DISPATCH_ROUTING_KEY,
+  NotificationDispatchMessage,
 } from '@app/shared';
 
 interface CreateFarmInput {
@@ -54,17 +54,6 @@ interface CallerCtx {
   role: string | null;
 }
 
-interface UserServiceGrpc {
-  createNotification(data: {
-    user_id: string;
-    type: string;
-    title: string;
-    message: string;
-    link?: string;
-    data?: string;
-  }): Observable<any>;
-}
-
 const REQUESTABLE_TYPES: CertificationStatus[] = [
   CertificationStatus.VIETGAP,
   CertificationStatus.GLOBALGAP,
@@ -79,21 +68,16 @@ function toNumberOrNull(v: any): number | null {
 
 // Service chứa business logic
 @Injectable()
-export class FarmService implements OnModuleInit {
+export class FarmService {
   private readonly logger = new Logger(FarmService.name);
-  private userService!: UserServiceGrpc;
 
   constructor(
     @InjectRepository(Farm)
     private readonly repo: Repository<Farm>,
     @InjectRepository(Batch)
     private readonly batchRepo: Repository<Batch>,
-    @Inject('USER_SERVICE') private readonly userClient: ClientGrpc,
+    private readonly amqp: AmqpConnection,
   ) {}
-
-  onModuleInit() {
-    this.userService = this.userClient.getService<UserServiceGrpc>('UserService');
-  }
 
   async create(input: CreateFarmInput, caller: CallerCtx) {
     if (!caller?.userId) throw new ForbiddenException('Thiếu thông tin caller');
@@ -347,6 +331,8 @@ export class FarmService implements OnModuleInit {
     return saved;
   }
 
+  // Publish event lên RabbitMQ  — user-service consume bất đồng bộ.
+  // Nếu user-service down, message nằm trong queue đến khi service lên lại.
   private async notifyOwner(
     farm: Farm,
     type: NotificationType,
@@ -354,22 +340,26 @@ export class FarmService implements OnModuleInit {
     message: string,
   ) {
     try {
-      await firstValueFrom(
-        this.userService.createNotification({
-          user_id: farm.owner_id,
-          type,
-          title,
-          message,
-          link: `/farms`,
-          data: JSON.stringify({
-            farm_id: farm.id,
-            certification_status: farm.certification_status,
-          }),
+      const payload: NotificationDispatchMessage = {
+        user_id: farm.owner_id,
+        type,
+        title,
+        message,
+        link: `/farms`,
+        data: JSON.stringify({
+          farm_id: farm.id,
+          certification_status: farm.certification_status,
         }),
+      };
+      await this.amqp.publish(
+        RABBIT_EXCHANGE,
+        NOTIFICATION_DISPATCH_ROUTING_KEY,
+        payload,
+        { persistent: true, contentType: 'application/json' },
       );
     } catch (err) {
       this.logger.warn(
-        `Notify owner failed for farm ${farm.id}: ${(err as Error).message}`,
+        `Notify publish failed for farm ${farm.id}: ${(err as Error).message}`,
       );
     }
   }

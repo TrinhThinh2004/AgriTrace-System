@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { RABBIT_EXCHANGE, RABBIT_DLX } from '@app/shared';
 import { CropCategoryModule } from './crop-category/crop-category.module';
 import { FarmModule } from './farm/farm.module';
 import { BatchModule } from './batch/batch.module';
@@ -29,6 +31,23 @@ import { GrpcExceptionFilter } from './common/grpc-exception.filter';
         logging: ['error'],
       }),
     }),
+
+    {
+      // global: true để AmqpConnection inject được ở mọi feature module con (FarmService, ...)
+      ...RabbitMQModule.forRootAsync({
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          uri: config.getOrThrow<string>('RABBITMQ_URL'),
+          exchanges: [
+            { name: RABBIT_EXCHANGE, type: 'topic' },
+            { name: RABBIT_DLX, type: 'topic' },
+          ],
+          connectionInitOptions: { wait: false },
+        }),
+      }),
+      global: true,
+    },
 
     CropCategoryModule,
     FarmModule,

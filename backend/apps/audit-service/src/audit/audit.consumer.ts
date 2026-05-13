@@ -13,6 +13,7 @@ import {
 } from '@app/shared';
 import { AuditService } from './audit.service';
 
+// hàm tiện ích để parse JSON an toàn, trả về null nếu input không hợp lệ hoặc không phải là object.
 function parseJson(s: string | undefined | null): Record<string, any> | null {
   if (!s) return null;
   try {

@@ -24,18 +24,22 @@ import { AuditableInterceptor } from './common/interceptors/auditable.intercepto
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     RedisModule,
-    RabbitMQModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.getOrThrow<string>('RABBITMQ_URL'),
-        exchanges: [
-          { name: RABBIT_EXCHANGE, type: 'topic' },
-          { name: RABBIT_DLX, type: 'topic' },
-        ],
-        connectionInitOptions: { wait: false }, // không block app startup nếu broker chưa sẵn sàng
+    {
+      // global: true để AmqpConnection inject được ở mọi module con (interceptor + feature modules)
+      ...RabbitMQModule.forRootAsync({
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          uri: config.getOrThrow<string>('RABBITMQ_URL'),
+          exchanges: [
+            { name: RABBIT_EXCHANGE, type: 'topic' },
+            { name: RABBIT_DLX, type: 'topic' },
+          ],
+          connectionInitOptions: { wait: false }, // không block app startup nếu broker chưa sẵn sàng
+        }),
       }),
-    }),
+      global: true,
+    },
     ThrottlerModule.forRootAsync({
       inject: [ConfigService, REDIS_CLIENT],
       useFactory: (config: ConfigService, redis: Redis) => ({

@@ -30,18 +30,22 @@ import { GrpcExceptionFilter } from './common/grpc-exception.filter';
       }),
     }),
 
-    RabbitMQModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.getOrThrow<string>('RABBITMQ_URL'),
-        exchanges: [
-          { name: RABBIT_EXCHANGE, type: 'topic' },
-          { name: RABBIT_DLX, type: 'topic' },
-        ],
-        connectionInitOptions: { wait: false },
+    {
+      // global: true để AmqpConnection inject được ở InspectionService (feature module con)
+      ...RabbitMQModule.forRootAsync({
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          uri: config.getOrThrow<string>('RABBITMQ_URL'),
+          exchanges: [
+            { name: RABBIT_EXCHANGE, type: 'topic' },
+            { name: RABBIT_DLX, type: 'topic' },
+          ],
+          connectionInitOptions: { wait: false },
+        }),
       }),
-    }),
+      global: true,
+    },
 
     TraceModule,
   ],

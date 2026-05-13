@@ -8,6 +8,11 @@ export class NotificationController {
 
   constructor(private readonly notificationService: NotificationService) {}
 
+  /**
+   * @deprecated Producer phải publish event qua RabbitMQ exchange `agritrace.events`
+   * routing key `notification.dispatch` (xem libs/shared/src/rabbitmq.ts). Method gRPC
+   * này còn lại để rollback nhanh nếu RabbitMQ có sự cố; sẽ xoá sau khi queue chạy ổn.
+   */
   @GrpcMethod('UserService', 'CreateNotification')
   async createNotification(data: {
     user_id: string;
