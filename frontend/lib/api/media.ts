@@ -5,7 +5,8 @@ export type AssetRefType =
   | "USER_AVATAR"
   | "FARM_PHOTO"
   | "BATCH_PHOTO"
-  | "CROP_PHOTO";
+  | "CROP_PHOTO"
+  | "CERTIFICATION_EVIDENCE";
 
 export interface Asset {
   id: string;

@@ -29,12 +29,27 @@ service ProductService {
   rpc ApproveCertification (ApproveCertificationRequest) returns (FarmResponse);
   rpc RejectCertification  (RejectCertificationRequest)  returns (FarmResponse);
 
-  //Batch CRUD 
+  //Batch CRUD
   rpc CreateBatch          (CreateBatchRequest)          returns (BatchResponse);
   rpc UpdateBatch          (UpdateBatchRequest)          returns (BatchResponse);
   rpc DeleteBatch          (DeleteBatchRequest)          returns (EmptyResponse);
   rpc ListBatches          (ListBatchesRequest)          returns (ListBatchesResponse);
   rpc TransitionBatchStatus(TransitionBatchStatusRequest) returns (BatchResponse);
+
+  // Certification Templates (admin)
+  rpc CreateCertificationTemplate (CreateTemplateRequest)  returns (TemplateResponse);
+  rpc UpdateCertificationTemplate (UpdateTemplateRequest)  returns (TemplateResponse);
+  rpc ListCertificationTemplates  (ListTemplatesRequest)   returns (ListTemplatesResponse);
+  rpc GetCertificationTemplate    (GetTemplateRequest)     returns (TemplateResponse);
+
+  // Checklist Response workflow (farmer + admin)
+  rpc StartChecklistResponse      (StartChecklistRequest)         returns (ChecklistResponseDto);
+  rpc UpsertChecklistAnswer       (UpsertAnswerRequest)           returns (ChecklistResponseItemDto);
+  rpc SubmitChecklistResponse     (SubmitChecklistRequest)        returns (ChecklistResponseDto);
+  rpc GetLatestChecklistByFarm    (GetLatestChecklistRequest)     returns (ChecklistResponseDto);
+  rpc GetChecklistResponseById    (GetChecklistResponseRequest)   returns (ChecklistResponseDto);
+  rpc ApproveChecklistResponse    (ReviewChecklistRequest)        returns (ChecklistResponseDto);
+  rpc RejectChecklistResponse     (ReviewChecklistRequest)        returns (ChecklistResponseDto);
 }
 
 // Common 
@@ -253,4 +268,136 @@ message TransitionBatchStatusRequest {
   string harvested_quantity  = 4;
   string shipped_quantity    = 5;
   string inspection_result   = 6;
+}
+
+// ───────── Certification Template ─────────
+message ChecklistItemDto {
+  string id                = 1;
+  string template_id       = 2;
+  int32  order             = 3;
+  string category          = 4;
+  string code              = 5;
+  string title             = 6;
+  string description       = 7;
+  bool   required          = 8;
+  bool   evidence_required = 9;
+}
+
+message TemplateResponse {
+  string code                       = 1;
+  string id                         = 2;
+  string name                       = 3;
+  string cert_type                  = 4;
+  int32  version                    = 5;
+  bool   active                     = 6;
+  string description                = 7;
+  string created_at                 = 8;
+  string updated_at                 = 9;
+  repeated ChecklistItemDto items   = 10;
+}
+
+message CreateTemplateRequest {
+  string code        = 1;
+  string name        = 2;
+  string cert_type   = 3;
+  int32  version     = 4;
+  string description = 5;
+  bool   active      = 6;
+  // Inline create items
+  repeated CreateTemplateItem items = 7;
+}
+
+message CreateTemplateItem {
+  int32  order             = 1;
+  string category          = 2;
+  string code              = 3;
+  string title             = 4;
+  string description       = 5;
+  bool   required          = 6;
+  bool   evidence_required = 7;
+}
+
+message UpdateTemplateRequest {
+  string id          = 1;
+  string name        = 2;
+  string description = 3;
+  bool   active      = 4;
+}
+
+message GetTemplateRequest {
+  string id = 1;
+  // Hoặc query bằng code (1 trong 2)
+  string code = 2;
+}
+
+message ListTemplatesRequest {
+  string cert_type = 1;
+  bool   active_only = 2;
+  int32  page  = 3;
+  int32  limit = 4;
+}
+
+message ListTemplatesResponse {
+  repeated TemplateResponse items = 1;
+  Pagination pagination           = 2;
+}
+
+// ───────── Checklist Response ─────────
+message ChecklistResponseItemDto {
+  string id                       = 1;
+  string response_id              = 2;
+  string item_id                  = 3;
+  string answer                   = 4;
+  repeated string evidence_asset_ids = 5;
+  string created_at               = 6;
+  string updated_at               = 7;
+}
+
+message ChecklistResponseDto {
+  string id            = 1;
+  string farm_id       = 2;
+  string template_id   = 3;
+  string status        = 4;
+  string submitted_at  = 5;
+  string reviewed_at   = 6;
+  string reviewed_by   = 7;
+  string notes         = 8;
+  string created_at    = 9;
+  string updated_at    = 10;
+  repeated ChecklistResponseItemDto items = 11;
+  TemplateResponse template               = 12;
+}
+
+message StartChecklistRequest {
+  string farm_id     = 1;
+  string template_id = 2;
+}
+
+message UpsertAnswerRequest {
+  string response_id = 1;
+  string item_id     = 2;
+  string answer      = 3;
+  repeated string evidence_asset_ids = 4;
+}
+
+message SubmitChecklistRequest {
+  string response_id = 1;
+}
+
+message GetLatestChecklistRequest {
+  string farm_id = 1;
+}
+
+message GetChecklistResponseRequest {
+  string response_id = 1;
+}
+
+message ReviewChecklistRequest {
+  string response_id = 1;
+  // approve: granted_type optional (nếu trống dùng template.cert_type)
+  string granted_type = 2;
+  // reject: reason bắt buộc
+  string reason       = 3;
+  // notes (approve hoặc reject)
+  string notes        = 4;
 }

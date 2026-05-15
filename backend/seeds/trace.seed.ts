@@ -25,8 +25,8 @@ export async function seedTraces() {
   const inspectionRepo = ds.getRepository(Inspection);
 
   if (isFresh) {
-    await inspectionRepo.delete({});
-    await activityRepo.delete({});
+    await inspectionRepo.createQueryBuilder().delete().execute();
+    await activityRepo.createQueryBuilder().delete().execute();
     console.log('  Đã xóa dữ liệu bảng truy vết');
   }
 

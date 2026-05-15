@@ -5,6 +5,9 @@ import { FarmController } from './farm/farm.controller';
 import { FarmService } from './farm/farm.service';
 import { BatchController } from './batch/batch.controller';
 import { BatchService } from './batch/batch.service';
+import { CertTemplateController } from './certification/template.controller';
+import { ChecklistController } from './certification/checklist.controller';
+import { CertificationService } from './certification/certification.service';
 
 /**
  * ProductModule trong API Gateway:
@@ -12,7 +15,18 @@ import { BatchService } from './batch/batch.service';
  * - Chỉ cần khai báo controllers và services proxy
  */
 @Module({
-  controllers: [CropCategoryController, FarmController, BatchController],
-  providers: [CropCategoryService, FarmService, BatchService],
+  controllers: [
+    CropCategoryController,
+    FarmController,
+    BatchController,
+    CertTemplateController,
+    ChecklistController,
+  ],
+  providers: [
+    CropCategoryService,
+    FarmService,
+    BatchService,
+    CertificationService,
+  ],
 })
 export class ProductModule {}

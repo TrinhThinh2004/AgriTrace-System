@@ -111,5 +111,8 @@ export async function apiFetch<T>(
   // 204 No Content
   if (res.status === 204) return undefined as T;
 
-  return (await res.json()) as T;
+  // Body có thể rỗng (NestJS trả null) → tránh JSON.parse('') crash
+  const text = await res.text();
+  if (!text) return null as T;
+  return JSON.parse(text) as T;
 }

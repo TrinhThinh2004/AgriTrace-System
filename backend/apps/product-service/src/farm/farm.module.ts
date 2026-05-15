@@ -9,5 +9,6 @@ import { FarmController } from './farm.controller';
   imports: [TypeOrmModule.forFeature([Farm, Batch])],
   controllers: [FarmController],
   providers: [FarmService],
+  exports: [FarmService],
 })
 export class FarmModule {}

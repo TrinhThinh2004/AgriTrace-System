@@ -7,6 +7,7 @@ import { RABBIT_EXCHANGE, RABBIT_DLX } from '@app/shared';
 import { CropCategoryModule } from './crop-category/crop-category.module';
 import { FarmModule } from './farm/farm.module';
 import { BatchModule } from './batch/batch.module';
+import { CertificationModule } from './certification/certification.module';
 import { HealthController } from './health.controller';
 import { GrpcAuthInterceptor } from './common/grpc-auth.interceptor';
 import { GrpcExceptionFilter } from './common/grpc-exception.filter';
@@ -52,6 +53,7 @@ import { GrpcExceptionFilter } from './common/grpc-exception.filter';
     CropCategoryModule,
     FarmModule,
     BatchModule,
+    CertificationModule,
   ],
   controllers: [HealthController],
   providers: [

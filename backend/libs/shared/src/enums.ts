@@ -90,6 +90,17 @@ export enum MediaEntityType {
   BATCH = 'BATCH',
   USER_AVATAR = 'USER_AVATAR',
   QR_CODE = 'QR_CODE',
+  CERTIFICATION_EVIDENCE = 'CERTIFICATION_EVIDENCE',
+}
+
+// ========================
+// CERTIFICATION ENUMS
+// ========================
+export enum ChecklistResponseStatus {
+  DRAFT = 'DRAFT',
+  SUBMITTED = 'SUBMITTED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
 }
 
 // ========================
@@ -102,4 +113,5 @@ export enum NotificationType {
   CERTIFICATION_REQUESTED = 'CERTIFICATION_REQUESTED',
   CERTIFICATION_APPROVED = 'CERTIFICATION_APPROVED',
   CERTIFICATION_REJECTED = 'CERTIFICATION_REJECTED',
+  CERT_CHECKLIST_SUBMITTED = 'CERT_CHECKLIST_SUBMITTED',
 }

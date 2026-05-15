@@ -22,9 +22,9 @@ export async function seedUsers() {
   const profileRepo = ds.getRepository(UserProfile);
 
   if (isFresh) {
-    await profileRepo.delete({});
-    await ds.getRepository(UserKey).delete({});
-    await userRepo.delete({});
+    await profileRepo.createQueryBuilder().delete().execute();
+    await ds.getRepository(UserKey).createQueryBuilder().delete().execute();
+    await userRepo.createQueryBuilder().delete().execute();
     console.log('  Đã xóa dữ liệu bảng người dùng');
   }
 

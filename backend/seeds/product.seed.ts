@@ -44,9 +44,9 @@ export async function seedProducts() {
   const batchRepo = ds.getRepository(Batch);
 
   if (isFresh) {
-    await batchRepo.delete({});
-    await farmRepo.delete({});
-    await cropRepo.delete({});
+    await batchRepo.createQueryBuilder().delete().execute();
+    await farmRepo.createQueryBuilder().delete().execute();
+    await cropRepo.createQueryBuilder().delete().execute();
     console.log('  Đã xóa dữ liệu bảng sản phẩm');
   }
 

@@ -10,17 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -28,15 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Check, X, Loader2 } from "lucide-react";
+import { Search, Eye, Loader2, ClipboardList } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import {
-  useFarms,
-  useApproveCertification,
-  useRejectCertification,
-} from "@/hooks/use-farms";
+import { useRouter } from "next/navigation";
+import { useFarms } from "@/hooks/use-farms";
 import { useUsers } from "@/hooks/use-users";
+import { useCertTemplates } from "@/hooks/use-certification";
+import { certificationApi } from "@/lib/api/certification";
 import type { Farm } from "@/lib/api/product";
 
 const certTypeLabel: Record<string, string> = {
@@ -46,20 +41,48 @@ const certTypeLabel: Record<string, string> = {
 };
 
 export default function StandardsApprovalQueue() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold">
+            Chứng nhận tiêu chuẩn
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Duyệt hồ sơ checklist VietGAP / GlobalGAP / Hữu cơ và quản lý template
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="queue">
+        <TabsList>
+          <TabsTrigger value="queue">Hàng đợi duyệt</TabsTrigger>
+          <TabsTrigger value="templates">Template chứng nhận</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="queue" className="mt-4">
+          <ApprovalQueueTab />
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-4">
+          <TemplatesTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function ApprovalQueueTab() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
-  const [approvingFarm, setApprovingFarm] = useState<Farm | null>(null);
-  const [grantedType, setGrantedType] = useState<string>("VIETGAP");
-  const [rejectingFarm, setRejectingFarm] = useState<Farm | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
+  const [openingFarmId, setOpeningFarmId] = useState<string | null>(null);
 
   const { data, isLoading } = useFarms({
     certification_status: "PENDING",
     limit: 100,
   });
   const { data: usersData } = useUsers({ limit: 100 });
-  const approve = useApproveCertification();
-  const reject = useRejectCertification();
 
   const userMap = useMemo(
     () => new Map((usersData?.items ?? []).map((u) => [u.id, u.full_name])),
@@ -82,61 +105,32 @@ export default function StandardsApprovalQueue() {
     );
   });
 
-  const openApprove = (farm: Farm) => {
-    setApprovingFarm(farm);
-    const requested = farm.requested_certification_type;
-    setGrantedType(
-      requested && ["VIETGAP", "GLOBALGAP", "ORGANIC"].includes(requested)
-        ? requested
-        : "VIETGAP",
-    );
-  };
-
-  const handleApprove = async () => {
-    if (!approvingFarm) return;
+  const openChecklist = async (farm: Farm) => {
+    setOpeningFarmId(farm.id);
     try {
-      await approve.mutateAsync({ id: approvingFarm.id, granted_type: grantedType });
-      toast.success(
-        `Đã duyệt chứng nhận ${certTypeLabel[grantedType] ?? grantedType} cho ${approvingFarm.name}`,
-      );
-      setApprovingFarm(null);
+      const latest = await certificationApi.getLatestByFarm(farm.id);
+      if (!latest) {
+        toast.error("Farm chưa gửi checklist", {
+          description:
+            "Yêu cầu farmer hoàn tất checklist trước khi admin có thể duyệt.",
+        });
+        return;
+      }
+      if (latest.status !== "SUBMITTED") {
+        toast.info(
+          `Checklist hiện đang ở trạng thái ${latest.status} — đang mở chi tiết.`,
+        );
+      }
+      router.push(`/standards/${latest.id}`);
     } catch (e: any) {
-      toast.error("Lỗi duyệt", { description: e.message });
-    }
-  };
-
-  const handleReject = async () => {
-    if (!rejectingFarm) return;
-    if (!rejectReason.trim()) {
-      toast.error("Vui lòng nhập lý do từ chối");
-      return;
-    }
-    try {
-      await reject.mutateAsync({
-        id: rejectingFarm.id,
-        reason: rejectReason.trim(),
-      });
-      toast.success(`Đã từ chối yêu cầu của ${rejectingFarm.name}`);
-      setRejectingFarm(null);
-      setRejectReason("");
-    } catch (e: any) {
-      toast.error("Lỗi từ chối", { description: e.message });
+      toast.error("Không tải được checklist", { description: e.message });
+    } finally {
+      setOpeningFarmId(null);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">
-            Duyệt yêu cầu chứng nhận
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Hàng đợi yêu cầu cấp chứng nhận VietGAP, GlobalGAP, Hữu cơ
-          </p>
-        </div>
-      </div>
-
+    <>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -160,7 +154,7 @@ export default function StandardsApprovalQueue() {
         </Select>
       </div>
 
-      <Card>
+      <Card className="mt-4">
         <CardContent className="p-0 overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -173,7 +167,7 @@ export default function StandardsApprovalQueue() {
                   <TableHead>Trang trại</TableHead>
                   <TableHead>Chủ sở hữu</TableHead>
                   <TableHead>Loại xin</TableHead>
-                  <TableHead>Ngày yêu cầu</TableHead>
+                  <TableHead>Cập nhật</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -196,7 +190,10 @@ export default function StandardsApprovalQueue() {
                             f.requested_certification_type}
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                        <Badge
+                          variant="outline"
+                          className="text-xs text-muted-foreground"
+                        >
                           Chưa chỉ định
                         </Badge>
                       )}
@@ -211,18 +208,15 @@ export default function StandardsApprovalQueue() {
                         <Button
                           size="sm"
                           variant="default"
-                          onClick={() => openApprove(f)}
+                          disabled={openingFarmId === f.id}
+                          onClick={() => openChecklist(f)}
                         >
-                          <Check className="h-3 w-3 mr-1" />
-                          Duyệt
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setRejectingFarm(f)}
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Từ chối
+                          {openingFarmId === f.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          ) : (
+                            <Eye className="h-3 w-3 mr-1" />
+                          )}
+                          Xem checklist
                         </Button>
                       </div>
                     </TableCell>
@@ -243,125 +237,73 @@ export default function StandardsApprovalQueue() {
           )}
         </CardContent>
       </Card>
+    </>
+  );
+}
 
-      {/* Approve confirm dialog */}
-      <Dialog
-        open={!!approvingFarm}
-        onOpenChange={(open) => {
-          if (!open) setApprovingFarm(null);
-        }}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Duyệt yêu cầu chứng nhận</DialogTitle>
-            <DialogDescription>
-              {approvingFarm && (
-                <>
-                  Trang trại: <strong>{approvingFarm.name}</strong>
-                  {approvingFarm.requested_certification_type ? (
-                    <>
-                      {" "}— Loại đề nghị:{" "}
-                      <strong>
-                        {certTypeLabel[
-                          approvingFarm.requested_certification_type
-                        ] ?? approvingFarm.requested_certification_type}
-                      </strong>
-                    </>
-                  ) : (
-                    <> — Yêu cầu chưa chỉ định loại, vui lòng chọn:</>
-                  )}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Loại chứng nhận sẽ cấp</Label>
-            <Select value={grantedType} onValueChange={setGrantedType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="VIETGAP">VietGAP</SelectItem>
-                <SelectItem value="GLOBALGAP">GlobalGAP</SelectItem>
-                <SelectItem value="ORGANIC">Hữu cơ</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setApprovingFarm(null)}
-              disabled={approve.isPending}
-            >
-              Huỷ
-            </Button>
-            <Button onClick={handleApprove} disabled={approve.isPending}>
-              {approve.isPending && (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              )}
-              Xác nhận duyệt
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+function TemplatesTab() {
+  const { data, isLoading } = useCertTemplates({ limit: 50 });
+  const templates = data?.items ?? [];
 
-      {/* Reject dialog with reason */}
-      <Dialog
-        open={!!rejectingFarm}
-        onOpenChange={(open) => {
-          if (!open) {
-            setRejectingFarm(null);
-            setRejectReason("");
-          }
-        }}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Từ chối yêu cầu chứng nhận</DialogTitle>
-            <DialogDescription>
-              {rejectingFarm && (
-                <>Trang trại: <strong>{rejectingFarm.name}</strong></>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="reject-reason">Lý do từ chối</Label>
-            <Textarea
-              id="reject-reason"
-              placeholder="Ví dụ: Thiếu giấy tờ kiểm định, hồ sơ chưa đầy đủ..."
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              rows={4}
-              maxLength={500}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {rejectReason.length}/500
-            </p>
+  return (
+    <Card>
+      <CardContent className="p-0 overflow-x-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setRejectingFarm(null);
-                setRejectReason("");
-              }}
-              disabled={reject.isPending}
-            >
-              Huỷ
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReject}
-              disabled={reject.isPending || !rejectReason.trim()}
-            >
-              {reject.isPending && (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              )}
-              Xác nhận từ chối
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        ) : templates.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            Chưa có template nào — chạy <code className="px-1 py-0.5 rounded bg-muted">npm run seed:fresh</code> để
+            tạo VIETGAP_VEGETABLE_V1
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-24">Mã</TableHead>
+                <TableHead>Tên</TableHead>
+                <TableHead>Loại</TableHead>
+                <TableHead>Số tiêu chí</TableHead>
+                <TableHead>Trạng thái</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {templates.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="font-mono text-xs">{t.code}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
+                      {t.name}
+                    </div>
+                    {t.description && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {t.description}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="text-xs">
+                      {certTypeLabel[t.cert_type] ?? t.cert_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{t.items.length}</TableCell>
+                  <TableCell>
+                    {t.active ? (
+                      <Badge className="text-xs">Active</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        Inactive
+                      </Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }
