@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Eye, Loader2, ClipboardList } from "lucide-react";
+import { Search, Eye, Loader2, ClipboardList, Plus, Pencil } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -33,6 +33,11 @@ import { useUsers } from "@/hooks/use-users";
 import { useCertTemplates } from "@/hooks/use-certification";
 import { certificationApi } from "@/lib/api/certification";
 import type { Farm } from "@/lib/api/product";
+import type { CertificationTemplate } from "@/lib/api/certification";
+import {
+  CreateTemplateDialog,
+  EditTemplateDialog,
+} from "@/components/CertTemplateDialog";
 
 const certTypeLabel: Record<string, string> = {
   VIETGAP: "VietGAP",
@@ -244,66 +249,93 @@ function ApprovalQueueTab() {
 function TemplatesTab() {
   const { data, isLoading } = useCertTemplates({ limit: 50 });
   const templates = data?.items ?? [];
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<CertificationTemplate | null>(null);
 
   return (
-    <Card>
-      <CardContent className="p-0 overflow-x-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : templates.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            Chưa có template nào — chạy <code className="px-1 py-0.5 rounded bg-muted">npm run seed:fresh</code> để
-            tạo VIETGAP_VEGETABLE_V1
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-24">Mã</TableHead>
-                <TableHead>Tên</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Số tiêu chí</TableHead>
-                <TableHead>Trạng thái</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {templates.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="font-mono text-xs">{t.code}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
-                      {t.name}
-                    </div>
-                    {t.description && (
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {t.description}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-xs">
-                      {certTypeLabel[t.cert_type] ?? t.cert_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">{t.items.length}</TableCell>
-                  <TableCell>
-                    {t.active ? (
-                      <Badge className="text-xs">Active</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs">
-                        Inactive
-                      </Badge>
-                    )}
-                  </TableCell>
+    <>
+      <div className="flex justify-end mb-3">
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-1" />
+          Tạo template
+        </Button>
+      </div>
+      <Card>
+        <CardContent className="p-0 overflow-x-auto">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : templates.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Chưa có template nào — bấm "Tạo template" để bắt đầu.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-24">Mã</TableHead>
+                  <TableHead>Tên</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Số tiêu chí</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {templates.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-mono text-xs">{t.code}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
+                        {t.name}
+                      </div>
+                      {t.description && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {t.description}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-xs">
+                        {certTypeLabel[t.cert_type] ?? t.cert_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">{t.items.length}</TableCell>
+                    <TableCell>
+                      {t.active ? (
+                        <Badge className="text-xs">Active</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          Inactive
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditing(t)}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Sửa
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <CreateTemplateDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <EditTemplateDialog
+        template={editing}
+        open={!!editing}
+        onOpenChange={(v) => !v && setEditing(null)}
+      />
+    </>
   );
 }

@@ -89,14 +89,19 @@ export class FarmService {
         ? input.owner_id
         : caller.userId;
 
-    const certStatus =
-      (input.certification_status as CertificationStatus) ||
-      CertificationStatus.NONE;
-    if (!Object.values(CertificationStatus).includes(certStatus)) {
+    // Farmer KHÔNG được tự cấp cert lúc tạo farm — phải đi qua checklist + admin duyệt.
+    // Admin vẫn được set tự do (vd: import data cũ).
+    const requestedCert =
+      caller.role === Role.FARMER
+        ? CertificationStatus.NONE
+        : ((input.certification_status as CertificationStatus) ||
+          CertificationStatus.NONE);
+    if (!Object.values(CertificationStatus).includes(requestedCert)) {
       throw new BadRequestException(
         `certification_status không hợp lệ: ${input.certification_status}`,
       );
     }
+    const certStatus = requestedCert;
 
     const farm = this.repo.create({
       owner_id: ownerId,
