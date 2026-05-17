@@ -106,11 +106,12 @@ graph LR
     MS --> MDB[("media-db :5436")]
     AS --> ADB[("audit-db :5437")]
 
-    GW & TS --> R[("Redis :6379<br/>Cache · Throttle")]
+    GW --> R[("Redis :6379<br/>Cache · Throttle")]
+    TS --> R
     MS --> CDN[["Cloudinary CDN"]]
     AS -.cron 1h.-> SC["AgriTraceAnchor.sol<br/>Sepolia Testnet"]
 
-    US -.Socket.IO.-> Client
+    US -- "Socket.IO" --> Client
 ```
 
 ### Bảng phân chia service
