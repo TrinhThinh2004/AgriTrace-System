@@ -1,13 +1,36 @@
 "use client";
+import { useMemo } from "react";
 import { StatsCard } from "@/components/StatsCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package, Building2, ClipboardCheck, QrCode, Plus, MapPin, Loader2,Sprout } from "lucide-react";
+import { Package, Building2, ClipboardCheck, QrCode, Plus, MapPin, Loader2 } from "lucide-react";
 import { useBatches } from "@/hooks/use-batches";
 import { useFarms } from "@/hooks/use-farms";
 import { useRouter } from "next/navigation";
+import { CountBarChart } from "@/components/charts/CountBarChart";
+import { DistributionPieChart } from "@/components/charts/DistributionPieChart";
+import { aggregateByMonth, aggregateByField } from "@/components/charts/aggregate";
+
+const BATCH_STATUS_LABELS: Record<string, string> = {
+  SEEDING: "Gieo trồng",
+  GROWING: "Đang phát triển",
+  HARVESTED: "Đã thu hoạch",
+  INSPECTED: "Đã kiểm định",
+  PACKED: "Đã đóng gói",
+  SHIPPED: "Đã xuất kho",
+};
+const BATCH_STATUS_COLORS: Record<string, string> = {
+  SEEDING: "#a3e635", GROWING: "#22c55e", HARVESTED: "#eab308",
+  INSPECTED: "#3b82f6", PACKED: "#a855f7", SHIPPED: "#0ea5e9",
+};
+const CERT_LABELS: Record<string, string> = {
+  NONE: "Chưa có", PENDING: "Đang chờ", VIETGAP: "VietGAP", GLOBALGAP: "GlobalGAP", ORGANIC: "Hữu cơ",
+};
+const CERT_COLORS: Record<string, string> = {
+  NONE: "#cbd5e1", PENDING: "#fbbf24", VIETGAP: "#22c55e", GLOBALGAP: "#3b82f6", ORGANIC: "#a855f7",
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -19,6 +42,16 @@ export default function AdminDashboard() {
   const isLoading = batchLoading || farmLoading;
 
   const certifiedFarms = farms.filter((f) => f.certification_status !== "NONE");
+
+  const batchesByMonth = useMemo(() => aggregateByMonth(batches, (b) => b.created_at, 6), [batches]);
+  const batchStatusDist = useMemo(
+    () => aggregateByField(batches, (b) => b.status, BATCH_STATUS_LABELS, BATCH_STATUS_COLORS),
+    [batches],
+  );
+  const certDist = useMemo(
+    () => aggregateByField(farms, (f) => f.certification_status, CERT_LABELS, CERT_COLORS),
+    [farms],
+  );
 
   return (
     <div className="space-y-6">
@@ -43,6 +76,36 @@ export default function AdminDashboard() {
         <StatsCard title="Chờ kiểm định" value={batches.filter((b) => b.status === "HARVESTED").length} icon={<ClipboardCheck className="h-5 w-5" />} />
         <StatsCard title="Đã xuất kho" value={batches.filter((b) => b.status === "SHIPPED").length} icon={<QrCode className="h-5 w-5" />} />
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">Lô hàng tạo mới theo tháng</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CountBarChart data={batchesByMonth} color="#22c55e" barName="Số lô" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Phân bố trạng thái lô</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DistributionPieChart data={batchStatusDist} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Chứng nhận trang trại</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-md mx-auto">
+            <DistributionPieChart data={certDist} />
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">

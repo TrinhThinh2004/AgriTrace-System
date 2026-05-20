@@ -6,13 +6,37 @@
   import { Package, CheckCircle, Clock, Search, Loader2, MapPin, Building2, ArrowRight } from "lucide-react";
   import { useBatches } from "@/hooks/use-batches";
   import { useFarms } from "@/hooks/use-farms";
+  import { useActivityLogs } from "@/hooks/use-activity-logs";
   import { CreateBatchDialog } from "@/components/CreateBatchDialog";
   import { CreateFarmDialog } from "@/components/CreateFarmDialog";
-  import { useState } from "react";
+  import { useState, useMemo } from "react";
   import { useRouter } from "next/navigation";
   import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
   import { Badge } from "@/components/ui/badge";
   import { Button } from "@/components/ui/button";
+  import { useAuth } from "@/contexts/AuthContext";
+  import { CountBarChart } from "@/components/charts/CountBarChart";
+  import { DistributionPieChart } from "@/components/charts/DistributionPieChart";
+  import { aggregateByMonth, aggregateByField } from "@/components/charts/aggregate";
+
+  const ACTIVITY_LABELS: Record<string, string> = {
+    SEEDING: "Gieo",
+    FERTILIZING: "Bón phân",
+    SPRAYING: "Phun thuốc",
+    WATERING: "Tưới",
+    PRUNING: "Tỉa cành",
+    HARVESTING: "Thu hoạch",
+    PACKING: "Đóng gói",
+    OTHER: "Khác",
+  };
+  const BATCH_STATUS_LABELS: Record<string, string> = {
+    SEEDING: "Gieo trồng", GROWING: "Phát triển", HARVESTED: "Thu hoạch",
+    INSPECTED: "Kiểm định", PACKED: "Đóng gói", SHIPPED: "Xuất kho",
+  };
+  const BATCH_STATUS_COLORS: Record<string, string> = {
+    SEEDING: "#a3e635", GROWING: "#22c55e", HARVESTED: "#eab308",
+    INSPECTED: "#3b82f6", PACKED: "#a855f7", SHIPPED: "#0ea5e9",
+  };
 
   const statusOptions: { value: string; label: string }[] = [
     { value: "all", label: "Tất cả trạng thái" },
@@ -36,12 +60,26 @@
     const [filter, setFilter] = useState("all");
     const [search, setSearch] = useState("");
     const router = useRouter();
+    const { user } = useAuth();
 
     const { data: batchData, isLoading } = useBatches();
     const { data: farmData } = useFarms();
+    const { data: activityData } = useActivityLogs({ performed_by: user?.id, limit: 200 });
 
     const batches = batchData?.items ?? [];
     const farms = farmData?.items ?? [];
+    const activities = activityData?.items ?? [];
+
+    const batchesByMonth = useMemo(() => aggregateByMonth(batches, (b) => b.created_at, 6), [batches]);
+    const activitiesByType = useMemo(() => {
+      const counts = new Map<string, number>();
+      for (const a of activities) counts.set(a.activity_type, (counts.get(a.activity_type) ?? 0) + 1);
+      return Object.entries(ACTIVITY_LABELS).map(([key, label]) => ({ label, value: counts.get(key) ?? 0 }));
+    }, [activities]);
+    const batchStatusDist = useMemo(
+      () => aggregateByField(batches, (b) => b.status, BATCH_STATUS_LABELS, BATCH_STATUS_COLORS),
+      [batches],
+    );
 
     const filtered = batches.filter((b) => {
       if (filter !== "all" && b.status !== filter) return false;
@@ -68,6 +106,33 @@
           <StatsCard title="Tổng lô hàng" value={batches.length} icon={<Package className="h-5 w-5" />} />
           <StatsCard title="Đã xuất kho" value={batches.filter((b) => b.status === "SHIPPED").length} icon={<CheckCircle className="h-5 w-5" />} />
           <StatsCard title="Đang xử lý" value={batches.filter((b) => b.status === "GROWING" || b.status === "SEEDING").length} icon={<Clock className="h-5 w-5" />} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Lô tạo mới theo tháng</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CountBarChart data={batchesByMonth} color="#22c55e" barName="Số lô" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Nhật ký canh tác theo loại</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CountBarChart data={activitiesByType} color="#3b82f6" barName="Số log" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Phân bố trạng thái lô</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DistributionPieChart data={batchStatusDist} />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Danh sách trang trại */}

@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   inspectionApi,
+  type InspectionListParams,
   type CreateInspectionBody,
   type UpdateInspectionBody,
   type SignBody,
@@ -12,6 +13,13 @@ export function useInspectionsByBatch(batchId: string | undefined) {
     queryKey: ["inspections", "batch", batchId],
     queryFn: () => inspectionApi.listByBatch(batchId!),
     enabled: !!batchId,
+  });
+}
+
+export function useInspections(params: InspectionListParams = {}) {
+  return useQuery({
+    queryKey: ["inspections", "list", params],
+    queryFn: () => inspectionApi.list(params),
   });
 }
 

@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   activityLogApi,
+  type ActivityLogListParams,
   type CreateActivityLogBody,
   type UpdateActivityLogBody,
   type SignBody,
@@ -12,6 +13,13 @@ export function useActivityLogsByBatch(batchId: string | undefined) {
     queryKey: ["activity-logs", "batch", batchId],
     queryFn: () => activityLogApi.listByBatch(batchId!),
     enabled: !!batchId,
+  });
+}
+
+export function useActivityLogs(params: ActivityLogListParams = {}) {
+  return useQuery({
+    queryKey: ["activity-logs", "list", params],
+    queryFn: () => activityLogApi.list(params),
   });
 }
 
