@@ -4,14 +4,16 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import {
   LayoutDashboard, Leaf, ClipboardCheck, QrCode, Building2, Sprout,
-  Users, Shield, Tractor, Package, KeyRound, ScrollText,
+  Users, Shield, Tractor, Package, KeyRound, ScrollText, MessageSquare,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSidebar } from "./SidebarContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useTotalUnreadMessages } from "@/hooks/use-messages";
 import type { Role } from "@/lib/mockData";
 
 const menuItems: Record<Role, { title: string; url: string; icon: React.ElementType }[]> = {
@@ -21,6 +23,7 @@ const menuItems: Record<Role, { title: string; url: string; icon: React.ElementT
     { title: "Lô hàng", url: "/batches", icon: Package },
     { title: "Giống cây trồng", url: "/crops", icon: Sprout },
     { title: "Người dùng", url: "/users", icon: Users },
+    { title: "Tin nhắn", url: "/messages", icon: MessageSquare },
     { title: "Tiêu chuẩn", url: "/standards", icon: Shield },
     { title: "Khóa số", url: "/keys", icon: KeyRound },
     { title: "Audit log", url: "/audit", icon: ScrollText },
@@ -29,10 +32,12 @@ const menuItems: Record<Role, { title: string; url: string; icon: React.ElementT
     { title: "Trang chủ", url: "/dashboard", icon: LayoutDashboard },
     { title: "Trang trại", url: "/farms", icon: Building2 },
     { title: "Lô hàng của tôi", url: "/batches", icon: Leaf },
+    { title: "Tin nhắn", url: "/messages", icon: MessageSquare },
     { title: "Khóa số", url: "/settings", icon: KeyRound },
   ],
   inspector: [
     { title: "Kiểm định", url: "/dashboard", icon: ClipboardCheck },
+    { title: "Tin nhắn", url: "/messages", icon: MessageSquare },
     { title: "Khóa số", url: "/settings", icon: KeyRound },
   ],
   public: [
@@ -50,6 +55,8 @@ function SidebarInner({
   const { user } = useAuth();
   const role = user?.role || "admin";
   const items = menuItems[role] || [];
+  const { data: unreadData } = useTotalUnreadMessages();
+  const unreadCount = unreadData?.count ?? 0;
 
   return (
     <>
@@ -76,23 +83,35 @@ function SidebarInner({
             Điều hướng
           </p>
         )}
-        {items.map((item) => (
-          <NavLink
-            key={item.title + item.url}
-            href={item.url}
-            end={item.url === "/dashboard"}
-            title={collapsed ? item.title : undefined}
-            onClick={onItemClick}
-            className={cn(
-              "flex items-center rounded-md text-sm hover:bg-sidebar-accent",
-              collapsed ? "justify-center h-10 w-10 mx-auto" : "px-3 py-2 gap-2",
-            )}
-            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-          >
-            <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="truncate">{item.title}</span>}
-          </NavLink>
-        ))}
+        {items.map((item) => {
+          const isMessages = item.url === "/messages";
+          const showBadge = isMessages && unreadCount > 0;
+          return (
+            <NavLink
+              key={item.title + item.url}
+              href={item.url}
+              end={item.url === "/dashboard"}
+              title={collapsed ? item.title : undefined}
+              onClick={onItemClick}
+              className={cn(
+                "flex items-center rounded-md text-sm hover:bg-sidebar-accent relative",
+                collapsed ? "justify-center h-10 w-10 mx-auto" : "px-3 py-2 gap-2",
+              )}
+              activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="truncate flex-1">{item.title}</span>}
+              {showBadge && !collapsed && (
+                <Badge variant="default" className="h-5 min-w-5 px-1.5 text-[10px]">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Badge>
+              )}
+              {showBadge && collapsed && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Footer — user info only, logout moved to header avatar */}

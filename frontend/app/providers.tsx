@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { AuthBootstrap } from "@/components/AuthBootstrap";
 import { NotificationSocketBridge } from "@/components/notifications/NotificationSocketBridge";
+import { MessageSocketBridge } from "@/components/messages/MessageSocketBridge";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -13,6 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <TooltipProvider>
         <AuthBootstrap />
         <NotificationSocketBridge />
+        <MessageSocketBridge />
         {children}
         <Toaster />
       </TooltipProvider>

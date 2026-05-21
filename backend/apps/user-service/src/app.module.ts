@@ -6,6 +6,7 @@ import { RedisModule, RABBIT_EXCHANGE, RABBIT_DLX } from '@app/shared';
 import { AuthModule } from './auth/auth.module';
 import { KeyModule } from './keys/key.module';
 import { NotificationModule } from './notification/notification.module';
+import { MessagingModule } from './messaging/messaging.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -48,6 +49,7 @@ import { HealthController } from './health.controller';
     AuthModule,
     KeyModule,
     NotificationModule,
+    MessagingModule,
   ],
   controllers: [HealthController],
 })

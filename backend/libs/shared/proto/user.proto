@@ -48,6 +48,14 @@ service UserService {
   rpc MarkAsRead         (MarkAsReadRequest)         returns (NotificationResponse);
   rpc MarkAllAsRead      (UserIdRequest)             returns (AffectedResponse);
   rpc DeleteNotification (DeleteNotificationRequest) returns (AffectedResponse);
+
+  // Messaging RPCs (chat 1-1 giữa các user)
+  rpc ListConversations       (ListConversationsRequest)       returns (ListConversationsResponse);
+  rpc GetOrCreateConversation (GetOrCreateConversationRequest) returns (ConversationResponse);
+  rpc ListMessages            (ListMessagesRequest)            returns (ListMessagesResponse);
+  rpc SendMessage             (SendMessageRequest)             returns (MessageItem);
+  rpc MarkConversationRead    (MarkConversationReadRequest)    returns (AffectedResponse);
+  rpc GetTotalUnreadMessages  (UserIdRequest)                  returns (UnreadCountResponse);
 }
 
 // ── Auth Messages ─────────────────────────────────────────────────
@@ -335,4 +343,58 @@ message DeleteNotificationRequest {
 
 message AffectedResponse {
   int32 affected = 1;
+}
+
+// ── Messaging Messages ────────────────────────────────────────────
+message ConversationResponse {
+  string id                   = 1;
+  UserResponse other_user     = 2;   // user còn lại trong conversation, tiện cho UI
+  string last_message_at      = 3;
+  string last_message_preview = 4;
+  int32  unread_count         = 5;
+}
+
+message MessageItem {
+  string id              = 1;
+  string conversation_id = 2;
+  string sender_id       = 3;
+  string content         = 4;
+  string read_at         = 5;
+  string created_at      = 6;
+}
+
+message ListConversationsRequest {
+  string user_id = 1;
+}
+
+message ListConversationsResponse {
+  repeated ConversationResponse items = 1;
+}
+
+message GetOrCreateConversationRequest {
+  string user_id       = 1;  // current user
+  string other_user_id = 2;
+}
+
+message ListMessagesRequest {
+  string conversation_id = 1;
+  string user_id         = 2;   // để verify participant
+  int32  page            = 3;
+  int32  limit           = 4;
+}
+
+message ListMessagesResponse {
+  repeated MessageItem items = 1;
+  Pagination pagination      = 2;
+}
+
+message SendMessageRequest {
+  string conversation_id = 1;
+  string sender_id       = 2;
+  string content         = 3;
+}
+
+message MarkConversationReadRequest {
+  string conversation_id = 1;
+  string user_id         = 2;
 }
