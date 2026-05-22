@@ -23,6 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
+import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
+import { AiSuggestionPanel } from "@/components/ai/AiSuggestionPanel";
+import { useSuggestBatchPlanting } from "@/hooks/use-ai-suggestion";
 
 const INITIAL_FORM = {
   batch_code: "",
@@ -41,6 +44,21 @@ export function CreateBatchDialog() {
   const createBatch = useCreateBatch();
   const { data: farmData } = useFarms();
   const { data: cropData } = useCropCategories();
+  const aiSuggest = useSuggestBatchPlanting();
+
+  const handleAiSuggest = () => {
+    if (!form.farm_id) {
+      toast.error("Hãy chọn trang trại trước khi xin gợi ý AI");
+      return;
+    }
+    aiSuggest.mutate({
+      farm_id: form.farm_id,
+      crop_category_id: form.crop_category_id || undefined,
+      season_hint: form.planting_date
+        ? `Dự kiến trồng ${form.planting_date}`
+        : undefined,
+    });
+  };
 
   const farms = farmData?.items ?? [];
   const crops = (cropData?.items ?? []).filter((c) => c.status === "ACTIVE");
@@ -116,7 +134,14 @@ export function CreateBatchDialog() {
               </Select>
             </div>
             <div>
-              <Label>Loại cây trồng *</Label>
+              <div className="flex items-center justify-between">
+                <Label>Loại cây trồng *</Label>
+                <AiSuggestButton
+                  onClick={handleAiSuggest}
+                  isPending={aiSuggest.isPending}
+                  disabled={!form.farm_id}
+                />
+              </div>
               <Select value={form.crop_category_id} onValueChange={(v) => set("crop_category_id", v)}>
                 <SelectTrigger><SelectValue placeholder="Chọn loại cây" /></SelectTrigger>
                 <SelectContent>
@@ -127,6 +152,13 @@ export function CreateBatchDialog() {
               </Select>
             </div>
           </div>
+
+          <AiSuggestionPanel
+            data={aiSuggest.data}
+            isPending={aiSuggest.isPending}
+            onRetry={handleAiSuggest}
+            onClose={() => aiSuggest.reset()}
+          />
 
           <div className="grid grid-cols-3 gap-4">
             <div>

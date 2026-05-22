@@ -16,6 +16,7 @@ import { MediaModule }   from './modules/media/media.module';
 import { AuditModule }   from './modules/audit/audit.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
+import { AiModule } from './modules/ai/ai.module';
 
 import { JwtAuthGuard, RolesGuard, OwnershipGuard } from './common/guards';
 import { PolicyModule } from './common/policy.module';
@@ -62,6 +63,7 @@ import { AuditableInterceptor } from './common/interceptors/auditable.intercepto
     AuditModule,
     NotificationModule,
     MessagingModule,
+    AiModule,
   ],
   providers: [
     // Rate limiting (chạy TRƯỚC JwtAuthGuard để chặn sớm brute-force)

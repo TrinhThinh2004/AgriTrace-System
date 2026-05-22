@@ -71,6 +71,12 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AiSuggestButton } from "@/components/ai/AiSuggestButton";
+import { AiSuggestionPanel } from "@/components/ai/AiSuggestionPanel";
+import {
+  useSuggestActivityLog,
+  useSuggestInspectionSummary,
+} from "@/hooks/use-ai-suggestion";
 
 const steps = [
   { title: "Gieo trồng", description: "Giống cây, ngày trồng", icon: Sprout },
@@ -155,6 +161,17 @@ export default function BatchDetail() {
   const { data: logsData, isLoading: logsLoading } = useActivityLogsByBatch(id);
   const { data: insData, isLoading: insLoading } = useInspectionsByBatch(id);
   const transitionBatch = useTransitionBatch();
+  const aiActivity = useSuggestActivityLog();
+  const aiInspection = useSuggestInspectionSummary();
+
+  const handleAiActivitySuggest = () => {
+    if (!id) return;
+    aiActivity.mutate({ batch_id: id, activity_type: logForm.activity_type });
+  };
+  const handleAiInspectionSuggest = () => {
+    if (!id) return;
+    aiInspection.mutate({ batch_id: id });
+  };
 
   const nextStatus = batch ? NEXT_STATUS[batch.status] : null;
 
@@ -603,7 +620,13 @@ export default function BatchDetail() {
                         </DialogHeader>
                         <div className="space-y-4">
                           <div>
-                            <Label>Loại hoạt động</Label>
+                            <div className="flex items-center justify-between">
+                              <Label>Loại hoạt động</Label>
+                              <AiSuggestButton
+                                onClick={handleAiActivitySuggest}
+                                isPending={aiActivity.isPending}
+                              />
+                            </div>
                             <Select value={logForm.activity_type} onValueChange={(v) => setLogForm((p) => ({ ...p, activity_type: v }))}>
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -613,6 +636,12 @@ export default function BatchDetail() {
                               </SelectContent>
                             </Select>
                           </div>
+                          <AiSuggestionPanel
+                            data={aiActivity.data}
+                            isPending={aiActivity.isPending}
+                            onRetry={handleAiActivitySuggest}
+                            onClose={() => aiActivity.reset()}
+                          />
                           <div>
                             <Label>Ngày thực hiện</Label>
                             <Input type="date" value={logForm.performed_at} onChange={(e) => setLogForm((p) => ({ ...p, performed_at: e.target.value }))} />
@@ -726,6 +755,19 @@ export default function BatchDetail() {
                           <DialogTitle>Tạo kiểm định mới</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
+                          <div className="flex items-center justify-end">
+                            <AiSuggestButton
+                              onClick={handleAiInspectionSuggest}
+                              isPending={aiInspection.isPending}
+                              label="Tóm tắt AI"
+                            />
+                          </div>
+                          <AiSuggestionPanel
+                            data={aiInspection.data}
+                            isPending={aiInspection.isPending}
+                            onRetry={handleAiInspectionSuggest}
+                            onClose={() => aiInspection.reset()}
+                          />
                           <div>
                             <Label>Loại kiểm định</Label>
                             <Select value={insForm.inspection_type} onValueChange={(v) => setInsForm((p) => ({ ...p, inspection_type: v }))}>

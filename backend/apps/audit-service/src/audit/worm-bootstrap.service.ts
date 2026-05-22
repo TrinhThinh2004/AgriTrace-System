@@ -18,7 +18,10 @@ export class WormBootstrapService implements OnApplicationBootstrap {
   constructor(@InjectDataSource() private readonly ds: DataSource) {}
 
   async onApplicationBootstrap() {
-    const sql = `
+    // Tách thành 3 query riêng để tránh pg deprecation
+    // "Calling client.query() when the client is already executing a query".
+    // pg driver xử lý chuỗi SQL nhiều câu lệnh trên cùng 1 client gây trùng query.
+    const createFunctionSql = `
 CREATE OR REPLACE FUNCTION audit_log_worm() RETURNS TRIGGER AS $$
 BEGIN
   IF TG_OP = 'DELETE' THEN
@@ -48,14 +51,17 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_audit_log_worm ON audit_logs;
+`;
+    const dropTriggerSql = `DROP TRIGGER IF EXISTS trg_audit_log_worm ON audit_logs;`;
+    const createTriggerSql = `
 CREATE TRIGGER trg_audit_log_worm
   BEFORE UPDATE OR DELETE ON audit_logs
   FOR EACH ROW EXECUTE FUNCTION audit_log_worm();
 `;
     try {
-      await this.ds.query(sql);
+      await this.ds.query(createFunctionSql);
+      await this.ds.query(dropTriggerSql);
+      await this.ds.query(createTriggerSql);
       this.logger.log('WORM trigger installed on audit_logs');
     } catch (e: any) {
       this.logger.error(`Failed to install WORM trigger: ${e.message}`);
